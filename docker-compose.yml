@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: gatewayapi
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gatewayapi
+    volumes:
+      - ./postgres:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    # on rebuilds
+    ports:
+      - '5435:5432'
+    networks:
+      - shared_network
+
+  gateway_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
+      #- DATABASE_URL=postgresql://gatewayapi:gatewayapi@postgres:5432/gatewayapi
+    ports:
+      - '5433:5433' # Map external port 5432 to internal port 5432, which is what axum server uses
+    depends_on:
+      - postgres
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true
