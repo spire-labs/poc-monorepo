@@ -1,0 +1,32 @@
+services:
+  postgres_new:
+    image: postgres:16
+    container_name: proposer-poc_new
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=proposer-poc_new
+    volumes:
+      - ./postgres_new:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    ports:
+      - '5437:5432'
+    networks:
+      - shared_network
+
+  proposer-poc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: proposer-poc
+    env_file:
+      - .env
+    ports:
+      - '7777:7777'
+    depends_on:
+      - postgres_new
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true

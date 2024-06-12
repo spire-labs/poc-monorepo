@@ -1,0 +1,18 @@
+[package]
+name = "spvm-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers = "2.0"
+serde = { version = "1.0.198", features = ["derive"] }
+serde_json = "1.0.116"
+sea-orm = { version = "0.12.15", features = ["mock", "sqlx-sqlite", "runtime-async-std-rustls", "sqlx-postgres"] }
+sqlx = "0.7.4"
+sqlx-postgres = "0.7.4"
+sea-query = "0.30.7"
+sea-query-binder = "0.5.0"
+spvm-entity = { path = "entity" }
+spvm-migration = { path = "migration" }
+async-std = { version = "1.12.0", features = ["attributes"] }
+hex = "0.4.3"
