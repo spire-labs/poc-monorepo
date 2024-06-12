@@ -1,0 +1,33 @@
+[package]
+name = "gateway-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.5"
+dotenvy = "0.15.7"
+sea-orm = { version = "0.12.15", features = ["postgres-array"] } #mock
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.68"
+tokio = { version = "1.0", features = ["full"] }
+gatewayapi_entity = { path = "entity" }
+migration = { path = "migration" }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+sqlx = "0.7.4"
+ethers = "2.0.14"
+sqlx-postgres = "0.7.4"
+sea-query = "0.30.7"
+sea-query-binder = "0.5.0"
+spvm-rs = { version = "0.1.0", path = "../../packages/spvm-rs" }
+axum-macros = "0.4.1"
+tower = "0.4.13"
+tower-http = { version = "0.5.2", features = ["full"] }
+reqwest = { version = "0.12.4", features = ["json"] }
+http-body = "1.0.0"
+ethers-contract = "2.0.14"
+rand = "0.8.5"
+http-body-util = "0.1.1"
+k256 = "0.13.3"
+sha3 = "0.10.8"
+hex = "0.4.3"
