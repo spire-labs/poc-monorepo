@@ -1,0 +1,32 @@
+services:
+  postgres_new:
+    image: postgres:16
+    container_name: enforcer_new
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=enforcer_new
+    volumes:
+      - ./postgres_new:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    ports:
+      - '5436:5432'
+    networks:
+      - shared_network
+
+  enforcer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enforcer
+    env_file:
+      - .env
+    ports:
+      - '1235:5555'
+    depends_on:
+      - postgres_new
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true
