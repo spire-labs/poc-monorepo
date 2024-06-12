@@ -7,12 +7,12 @@ Spire PoC Monorepo!
 TODO (megan): 
 - [ ] finish creating a shared docker-compose.yml and Dockerfile for all rust executables in monorepo (they live in the apps directory)
 - [ ] set up github actions (CI?) for PRs and pushes to main
-- [ ] make sure the apps are up to date with the latest in all individual repos, announce to the team th
-- [ ] test out functionality with hosted Anvil instance
+- [ ] make sure the apps are up to date with the latest in all individual repos, announce to the team that we now build in the monorepo only
 - [ ] bring env vars out of individual apps into one consolidated file
+- [ ] test out functionality with hosted Anvil instance
 - [ ] add Spire wallet and poc-infra apps to monorepo (useful commands for this include `rm -rf .git` inside the folder for the app added, then `git rm --cached path/to/app` from parent folder, followed by `git add path/to/app`)
 - [ ] write additional scripts (makefile?) to spin up all apps in monorepo
-- [ ] add setup instruction in READMEs all apps for development purposes
+- [ ] add setup instructions in READMEs all apps for development purposes
 - [ ] add TODOs in all READMEs for getting the monorepo ready for release
 
 # Dev Setup
