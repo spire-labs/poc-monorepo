@@ -1,22 +1,11 @@
-[package]
-name = "spire-poc-monorepo"
-version = "0.1.0"
-edition = "2021"
-
-[[bin]]
-name = "enforcer"
-path = "apps/enforcer"
-
-[[bin]]
-name = "gateway-api"
-path = "apps/gateway-api"
-
-[[bin]]
-name = "proposer-poc"
-path = "apps/proposer-poc"
-
 [workspace]
 members = [
-    "apps/*",
-    "packages/*",
+    "apps/enforcer",
+    "apps/gateway-api",
+    "apps/proposer-poc",
+    "packages/spvm-rs",
     ]
+resolver = "2"
+
+#[workspace.dependencies]
+#spvm-rs = { path = "packages/spvm-rs" }
