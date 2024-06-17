@@ -27,4 +27,4 @@ jobs:
     - name: Build Enforcer
       run: cargo build -v --package enforcer
     - name: Build Proposer
-      run: cargo build -v --package proposer-poc
+      run: cargo build -v --package proposer
