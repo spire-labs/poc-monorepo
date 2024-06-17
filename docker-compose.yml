@@ -44,12 +44,10 @@ services:
 
   gateway_api:
     build:
-      #context: apps/gateway-api
       dockerfile: apps/gateway-api/Dockerfile
-    #working_dir: /apps/gateway-api
     container_name: gateway_api
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
+      - DATABASE_URL=postgresql://postgres:postgres@postgres_gatewayapi:5432/gatewayapi
     ports:
       - '5433:5433' # Map external port 5433 to internal port 5433, which is what axum server uses
     depends_on:
