@@ -20,6 +20,8 @@ async fn main() {
         .init();
     dotenvy::dotenv().ok();
 
+    println!("yay!");
+
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
     let database: DatabaseConnection = Database::connect(db_url).await.unwrap();
 
@@ -27,7 +29,7 @@ async fn main() {
         .await
         .expect("Database connection failed");
 
-    println!("yay!");
+    println!("let's do this!");
 
     // fetch deployed contract addresses and abis once on startup, and store in shared state
     let contract_data = fetch_contract_data()

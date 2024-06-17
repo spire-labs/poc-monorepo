@@ -16,11 +16,11 @@ services:
 
   #postgres_enforcer:
     #image: postgres:16
-    #container_name: enforcer_new
+    #container_name: enforcer_db
     #environment:
       #- POSTGRES_USER=postgres
       #- POSTGRES_PASSWORD=postgres
-      #- POSTGRES_DB=enforcer_new
+      #- POSTGRES_DB=enforcer
     #volumes:
       #- ./postgres_enforcer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
     #ports:
@@ -44,9 +44,9 @@ services:
 
   gateway_api:
     build:
-      context: apps/gateway-api
-      dockerfile: Dockerfile
-    working_dir: .
+      #context: apps/gateway-api
+      dockerfile: apps/gateway-api/Dockerfile
+    #working_dir: /apps/gateway-api
     container_name: gateway_api
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
@@ -68,6 +68,7 @@ services:
       #- '1235:5555'
     #depends_on:
       #- postgres_enforcer
+      #- gateway_api
     #networks:
       #- shared_network
 

@@ -1,9 +1,9 @@
 [workspace]
 members = [
+    "packages/spvm-rs",
     "apps/enforcer",
     "apps/gateway-api",
     "apps/proposer-poc",
-    "packages/spvm-rs",
     ]
 resolver = "2"
 

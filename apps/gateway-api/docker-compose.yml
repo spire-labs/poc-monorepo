@@ -16,8 +16,8 @@ services:
 
   gateway_api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../.. #requires context from monorepo root for spvm-rs lib dependency
+      dockerfile: ./apps/gateway-api/Dockerfile
     container_name: gateway_api
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
