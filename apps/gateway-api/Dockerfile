@@ -1,5 +1,5 @@
 # Stage 1: Build the executable
-FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef 
 WORKDIR /app 
 
 FROM chef AS builder
@@ -21,4 +21,3 @@ COPY --from=builder app/target/release/gateway-api /usr/local/bin
 # Expose the port the axum server runs on - Cloud Run uses 8080
 EXPOSE 8080
 CMD ["gateway-api"]
-

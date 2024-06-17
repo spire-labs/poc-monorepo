@@ -14,19 +14,19 @@ services:
     networks:
       - shared_network
 
-  #postgres_enforcer:
-    #image: postgres:16
-    #container_name: enforcer_db
-    #environment:
-      #- POSTGRES_USER=postgres
-      #- POSTGRES_PASSWORD=postgres
-      #- POSTGRES_DB=enforcer
-    #volumes:
-      #- ./postgres_enforcer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
-    #ports:
-      #- '5436:5432'
-    #networks:
-      #- shared_network
+  postgres_enforcer:
+    image: postgres:16
+    container_name: enforcer_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=enforcer
+    volumes:
+      - ./postgres_enforcer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    ports:
+      - '5436:5432'
+    networks:
+      - shared_network
 
   #postgres_proposer:
     #image: postgres:16
@@ -55,20 +55,19 @@ services:
     networks:
       - shared_network
 
-  #enforcer:
-    #build:
-      #context: .
-      #dockerfile: Dockerfile
-    #container_name: enforcer
-    #env_file:
-      #- .env
-    #ports:
-      #- '1235:5555'
-    #depends_on:
-      #- postgres_enforcer
-      #- gateway_api
-    #networks:
-      #- shared_network
+  enforcer:
+    build:
+      dockerfile: apps/enforcer/Dockerfile
+    container_name: enforcer
+    env_file:
+      - apps/enforcer/.env
+    ports:
+      - '1235:5555'
+    depends_on:
+      - postgres_enforcer
+      - gateway_api
+    networks:
+      - shared_network
 
   #proposer-poc:
     #build:
