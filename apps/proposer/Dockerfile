@@ -9,16 +9,15 @@ RUN cargo chef prepare --recipe-path recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 COPY . .
-RUN cargo build --release --bin enforcer
+RUN cargo build --release --bin proposer
 
 # Stage 2: Create the runtime image
 FROM debian:latest
 
 RUN apt-get update && apt-get install -y libssl-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder app/target/release/enforcer /usr/local/bin
+COPY --from=builder app/target/release/proposer /usr/local/bin
 
 # Expose the port the axum server runs on - Cloud Run uses 8080
 EXPOSE 8080
-CMD ["enforcer"]
-
+CMD ["proposer"]

@@ -1,5 +1,3 @@
-/target
 /postgres
-/data
-/logs
 .env
+Cargo.lock

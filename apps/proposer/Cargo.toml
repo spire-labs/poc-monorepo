@@ -1,5 +1,5 @@
 [package]
-name = "proposer-poc"
+name = "proposer"
 version = "0.1.0"
 edition = "2021"
 

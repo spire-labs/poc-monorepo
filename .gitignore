@@ -1,3 +1,6 @@
-/postgres
+/postgres_gatewayapi
+/postgres_enforcer
+/postgres_proposer
 /target
 .env
+Cargo.lock

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: gatewayapi
+    container_name: gatewayapi_db
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -16,12 +16,11 @@ services:
 
   gateway_api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../.. #requires context from monorepo root for spvm-rs lib dependency
+      dockerfile: ./apps/gateway-api/Dockerfile
     container_name: gateway_api
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
-      #- DATABASE_URL=postgresql://gatewayapi:gatewayapi@postgres:5432/gatewayapi
     ports:
       - '5433:5433' # Map external port 5432 to internal port 5432, which is what axum server uses
     depends_on:
