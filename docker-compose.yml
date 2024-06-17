@@ -7,8 +7,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=gatewayapi
     volumes:
-      - ./postgres_gatewayapi:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
-    # on rebuilds
+      - ./postgres_gatewayapi:/var/lib/postgresql/data
     ports:
       - '5435:5432'
     networks:
@@ -22,25 +21,25 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=enforcer
     volumes:
-      - ./postgres_enforcer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+      - ./postgres_enforcer:/var/lib/postgresql/data
     ports:
       - '5436:5432'
     networks:
       - shared_network
 
-  #postgres_proposer:
-    #image: postgres:16
-    #container_name: proposer_new
-    #environment:
-      #- POSTGRES_USER=postgres
-      #- POSTGRES_PASSWORD=postgres
-      #- POSTGRES_DB=proposer_new
-    #volumes:
-      #- ./postgres_proposer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
-    #ports:
-      #- '5437:5432'
-    #networks:
-      #- shared_network
+  postgres_proposer:
+    image: postgres:16
+    container_name: proposer_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=proposer
+    volumes:
+      - ./postgres_proposer:/var/lib/postgresql/data
+    ports:
+      - '5437:5432'
+    networks:
+      - shared_network
 
   gateway_api:
     build:
@@ -69,19 +68,18 @@ services:
     networks:
       - shared_network
 
-  #proposer-poc:
-    #build:
-      #context: .
-      #dockerfile: Dockerfile
-    #container_name: proposer-poc
-    #env_file:
-      #- .env
-    #ports:
-      #- '7777:7777'
-    #depends_on:
-      #- postgres_proposer
-    #networks:
-      #- shared_network
+  proposer:
+    build:
+      dockerfile: apps/proposer/Dockerfile
+    container_name: proposer
+    env_file:
+      - apps/proposer/.env
+    ports:
+      - '7777:7777'
+    depends_on:
+      - postgres_proposer
+    networks:
+      - shared_network
 
 networks:
   shared_network:
