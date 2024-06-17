@@ -22,9 +22,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build Gateway API
-      run: cargo build -v --package gateway-api 
-    - name: Build Enforcer
-      run: cargo build -v --package enforcer
-    - name: Build Proposer
-      run: cargo build -v --package proposer
+    - name: Build all apps
+      run: cargo build -v
