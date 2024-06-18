@@ -6,7 +6,7 @@ import "lib/forge-std/src/Test.sol";
 
 import "lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import "src/GenericTicket.sol";
+import "../src/GenericTicket.sol";
 
 contract GenericTicketTest is Test, ERC721Holder {
     function testCreation() public {
