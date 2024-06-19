@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
 import "../src/spvm-1.sol";
-import "../../election-contract/src/ElectionInterface.sol";
+import "election-contract/ElectionInterface.sol";
 
 contract SPVMTest is Test, SPVM {
     uint256 internal pk;

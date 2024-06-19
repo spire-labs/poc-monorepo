@@ -22,7 +22,7 @@ Note: Having a working docker installation is required.
 
 Start docker:
 ```shell
-docker network create shared_network && docker-compose up
+docker-compose up
 ```
 
 TODO
