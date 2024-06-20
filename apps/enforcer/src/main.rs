@@ -15,10 +15,12 @@ use spvm_rs::*;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
+use std::collections::HashMap;
 
 mod api;
 
-type ValidityConditions = Arc<Mutex<Vec<Transaction>>>;
+
+type ValidityConditions = Arc<Mutex<HashMap<Address, Vec<Transaction>>>>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -65,7 +67,7 @@ async fn main() {
     tracing_subscriber::fmt::init();
     dotenv().ok();
 
-    let validity_txs: ValidityConditions = Arc::new(Mutex::new(Vec::<Transaction>::new()));
+    let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
 
     register_with_gateway().await;
 
@@ -122,7 +124,7 @@ async fn main() {
 }
 
 fn app(db: DatabaseConnection) -> Router {
-    let validity_txs: ValidityConditions = Arc::new(Mutex::new(Vec::<Transaction>::new()));
+    let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
 
     let start_block_num = env::var("BLOCK_NUM")
         .ok()
@@ -154,65 +156,63 @@ async fn submit_validity_condition(
         extracted
     };
 
-    let transactions: Vec<TxEncoded> = validity_txs
-        .into_iter()
-        .map(|tx| {
-            let encoded_tx_param = encode_tx_params(&tx.tx_content.tx_param);
-            TxEncoded {
-                tx_hash: tx.tx_hash,
-                tx_content: TxContentEncoded {
-                    from: tx.tx_content.from,
-                    tx_type: tx.tx_content.tx_type,
-                    tx_param: encoded_tx_param,
-                    nonce: tx.tx_content.nonce,
-                },
-                signature: tx.signature.to_vec().into(),
-            }
-        })
-        .collect();
+	for (preconf_add, txs) in validity_txs.iter() {
+		let transactions: Vec<TxEncoded> = txs
+			.iter()
+			.map(|tx| {
+				let encoded_tx_param = encode_tx_params(&tx.tx_content.tx_param);
+				TxEncoded {
+					tx_hash: tx.tx_hash,
+					tx_content: TxContentEncoded {
+						from: tx.tx_content.from,
+						tx_type: tx.tx_content.tx_type,
+						tx_param: encoded_tx_param,
+						nonce: tx.tx_content.nonce,
+					},
+					signature: tx.signature.to_vec().into(),
+				}
+			})
+			.collect();
 
-    abigen!(Slashing, "contracts/Slashing.json");
+		abigen!(Slashing, "contracts/Slashing.json");
 
-    let provider_url = env::var("PROVIDER")?;
+		let provider_url = env::var("PROVIDER")?;
 
-    let provider = Provider::<Http>::try_from(provider_url)?;
-    let client = SignerMiddleware::new(
-        provider,
-        env::var("PRIVATE_KEY")
-            .unwrap()
-            .parse::<LocalWallet>()
-            .unwrap()
-            .with_chain_id(31337u64),
-    );
+		let provider = Provider::<Http>::try_from(provider_url)?;
+		let client = SignerMiddleware::new(
+			provider,
+			env::var("PRIVATE_KEY")
+				.unwrap()
+				.parse::<LocalWallet>()
+				.unwrap()
+				.with_chain_id(31337u64),
+		);
 
-    let contract = Slashing::new(
-        env::var("PRECONF_CONTRACT")
-            .unwrap()
-            .parse::<Address>()
-            .unwrap(),
-        Arc::new(client),
-    );
+		let contract = Slashing::new(
+				*preconf_add,
+				Arc::new(client),
+		);
 
-    let transactions: Vec<Transaction> = transactions
-        .into_iter()
-        .map(|tx_enc| Transaction {
-            tx_hash: tx_enc.tx_hash.into(),
-            tx_content: PreconfTransactionContent {
-                from: tx_enc.tx_content.from,
-                tx_type: tx_enc.tx_content.tx_type,
-                tx_param: tx_enc.tx_content.tx_param,
-                nonce: tx_enc.tx_content.nonce,
-            },
-            signature: tx_enc.signature,
-        })
-        .collect();
+		let transactions: Vec<Transaction> = transactions
+			.into_iter()
+			.map(|tx_enc| Transaction {
+				tx_hash: tx_enc.tx_hash.into(),
+				tx_content: PreconfTransactionContent {
+					from: tx_enc.tx_content.from,
+					tx_type: tx_enc.tx_content.tx_type,
+					tx_param: tx_enc.tx_content.tx_param,
+					nonce: tx_enc.tx_content.nonce,
+				},
+				signature: tx_enc.signature,
+			})
+			.collect();
 
-    let _ = contract
-        .submit_validity_conditions(transactions)
-        .send()
-        .await?
-        .await?;
-
+		let _ = contract
+			.submit_validity_conditions(transactions)
+			.send()
+			.await?
+			.await?;
+	}
     Ok(())
 }
 
