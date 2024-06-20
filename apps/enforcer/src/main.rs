@@ -10,6 +10,7 @@ use ethers::{
 use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
+use serde::{Deserialize, Serialize};
 use spvm_rs::*;
 use std::env;
 use std::sync::{Arc, Mutex};
@@ -37,6 +38,26 @@ struct TxContentEncoded {
     tx_type: u8,
     tx_param: Bytes,
     nonce: u32,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MetadatPayload {
+    pub data: Data,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Data {
+    pub challenge: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RegisterEnforcerMetadata {
+    pub address: String, //TODO: type check for address
+    pub challenge_string: String,
+    pub signature: String, //TODO: type check for hex encoded string
+    pub name: String,
+    pub preconf_contracts: Vec<String>, //TODO: type check for address
+    pub url: String,                    //TODO: type check that is actually a url
 }
 
 #[tokio::main]
@@ -199,7 +220,7 @@ async fn register_with_gateway() {
     let gateway_ip = env::var("GATEWAY_IP").unwrap();
     let client = reqwest::Client::new();
 
-    let challenge_string: api::MetadatPayload = client
+    let challenge_string: MetadatPayload = client
         .get(format!("{}/enforcer_metadata", gateway_ip))
         .send()
         .await
@@ -217,7 +238,7 @@ async fn register_with_gateway() {
         .await
         .unwrap();
 
-    let resp = api::RegisterEnforcerMetadata {
+    let resp = RegisterEnforcerMetadata {
         address: wallet.address().to_string(),
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),

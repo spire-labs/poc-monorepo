@@ -19,7 +19,7 @@ services:
       dockerfile: ./apps/enforcer/Dockerfile
     container_name: enforcer
     env_file:
-      - ./apps/enforcer/.env
+      - ./.env
     ports:
       - '1235:5555'
     depends_on:
