@@ -7,11 +7,11 @@ use ethers::{
 use sea_orm::{
     entity::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
+use serde::{Deserialize, Serialize};
+use std::default::Default;
 use std::error::Error;
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TransactionContent {
     pub from: Address,
     pub tx_type: u8, // Only the first 2 bits used
@@ -25,14 +25,14 @@ pub enum TransactionParams {
     Transfer(TransferTransactionParams),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct MintTransactionParams {
     pub token_ticker: String,
     pub owner: Address,
     pub supply: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TransferTransactionParams {
     pub token_ticker: String,
     pub to: Address,
@@ -44,6 +44,26 @@ pub struct Transaction {
     pub tx_content: TransactionContent,
     pub tx_hash: TxHash,
     pub signature: Signature,
+}
+
+impl Default for TransactionParams {
+    fn default() -> Self {
+        Self::Mint(MintTransactionParams::default())
+    }
+}
+
+impl Default for Transaction {
+    fn default() -> Self {
+        Self {
+            tx_content: TransactionContent::default(),
+            tx_hash: TxHash::default(),
+            signature: Signature {
+                r: ethers::types::U256::zero(),
+                s: ethers::types::U256::zero(),
+                v: 0,
+            },
+        }
+    }
 }
 
 impl TransactionContent {
