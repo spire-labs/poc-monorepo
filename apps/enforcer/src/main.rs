@@ -10,14 +10,17 @@ use ethers::{
 use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
+use serde::{Deserialize, Serialize};
 use spvm_rs::*;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
+use std::collections::HashMap;
 
 mod api;
 
-type ValidityConditions = Arc<Mutex<Vec<Transaction>>>;
+
+type ValidityConditions = Arc<Mutex<HashMap<Address, Vec<Transaction>>>>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -39,12 +42,32 @@ struct TxContentEncoded {
     nonce: u32,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MetadatPayload {
+    pub data: Data,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Data {
+    pub challenge: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct RegisterEnforcerMetadata {
+    pub address: String, //TODO: type check for address
+    pub challenge_string: String,
+    pub signature: String, //TODO: type check for hex encoded string
+    pub name: String,
+    pub preconf_contracts: Vec<String>, //TODO: type check for address
+    pub url: String,                    //TODO: type check that is actually a url
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
     dotenv().ok();
 
-    let validity_txs: ValidityConditions = Arc::new(Mutex::new(Vec::<Transaction>::new()));
+    let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
 
     register_with_gateway().await;
 
@@ -101,7 +124,7 @@ async fn main() {
 }
 
 fn app(db: DatabaseConnection) -> Router {
-    let validity_txs: ValidityConditions = Arc::new(Mutex::new(Vec::<Transaction>::new()));
+    let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
 
     let start_block_num = env::var("BLOCK_NUM")
         .ok()
@@ -133,65 +156,63 @@ async fn submit_validity_condition(
         extracted
     };
 
-    let transactions: Vec<TxEncoded> = validity_txs
-        .into_iter()
-        .map(|tx| {
-            let encoded_tx_param = encode_tx_params(&tx.tx_content.tx_param);
-            TxEncoded {
-                tx_hash: tx.tx_hash,
-                tx_content: TxContentEncoded {
-                    from: tx.tx_content.from,
-                    tx_type: tx.tx_content.tx_type,
-                    tx_param: encoded_tx_param,
-                    nonce: tx.tx_content.nonce,
-                },
-                signature: tx.signature.to_vec().into(),
-            }
-        })
-        .collect();
+	for (preconf_add, txs) in validity_txs.iter() {
+		let transactions: Vec<TxEncoded> = txs
+			.iter()
+			.map(|tx| {
+				let encoded_tx_param = encode_tx_params(&tx.tx_content.tx_param);
+				TxEncoded {
+					tx_hash: tx.tx_hash,
+					tx_content: TxContentEncoded {
+						from: tx.tx_content.from,
+						tx_type: tx.tx_content.tx_type,
+						tx_param: encoded_tx_param,
+						nonce: tx.tx_content.nonce,
+					},
+					signature: tx.signature.to_vec().into(),
+				}
+			})
+			.collect();
 
-    abigen!(Slashing, "contracts/Slashing.json");
+		abigen!(Slashing, "contracts/Slashing.json");
 
-    let provider_url = env::var("PROVIDER")?;
+		let provider_url = env::var("PROVIDER")?;
 
-    let provider = Provider::<Http>::try_from(provider_url)?;
-    let client = SignerMiddleware::new(
-        provider,
-        env::var("PRIVATE_KEY")
-            .unwrap()
-            .parse::<LocalWallet>()
-            .unwrap()
-            .with_chain_id(31337u64),
-    );
+		let provider = Provider::<Http>::try_from(provider_url)?;
+		let client = SignerMiddleware::new(
+			provider,
+			env::var("PRIVATE_KEY")
+				.unwrap()
+				.parse::<LocalWallet>()
+				.unwrap()
+				.with_chain_id(31337u64),
+		);
 
-    let contract = Slashing::new(
-        env::var("PRECONF_CONTRACT")
-            .unwrap()
-            .parse::<Address>()
-            .unwrap(),
-        Arc::new(client),
-    );
+		let contract = Slashing::new(
+				*preconf_add,
+				Arc::new(client),
+		);
 
-    let transactions: Vec<Transaction> = transactions
-        .into_iter()
-        .map(|tx_enc| Transaction {
-            tx_hash: tx_enc.tx_hash.into(),
-            tx_content: PreconfTransactionContent {
-                from: tx_enc.tx_content.from,
-                tx_type: tx_enc.tx_content.tx_type,
-                tx_param: tx_enc.tx_content.tx_param,
-                nonce: tx_enc.tx_content.nonce,
-            },
-            signature: tx_enc.signature,
-        })
-        .collect();
+		let transactions: Vec<Transaction> = transactions
+			.into_iter()
+			.map(|tx_enc| Transaction {
+				tx_hash: tx_enc.tx_hash.into(),
+				tx_content: PreconfTransactionContent {
+					from: tx_enc.tx_content.from,
+					tx_type: tx_enc.tx_content.tx_type,
+					tx_param: tx_enc.tx_content.tx_param,
+					nonce: tx_enc.tx_content.nonce,
+				},
+				signature: tx_enc.signature,
+			})
+			.collect();
 
-    let _ = contract
-        .submit_validity_conditions(transactions)
-        .send()
-        .await?
-        .await?;
-
+		let _ = contract
+			.submit_validity_conditions(transactions)
+			.send()
+			.await?
+			.await?;
+	}
     Ok(())
 }
 
@@ -199,7 +220,7 @@ async fn register_with_gateway() {
     let gateway_ip = env::var("GATEWAY_IP").unwrap();
     let client = reqwest::Client::new();
 
-    let challenge_string: api::MetadatPayload = client
+    let challenge_string: MetadatPayload = client
         .get(format!("{}/enforcer_metadata", gateway_ip))
         .send()
         .await
@@ -217,7 +238,7 @@ async fn register_with_gateway() {
         .await
         .unwrap();
 
-    let resp = api::RegisterEnforcerMetadata {
+    let resp = RegisterEnforcerMetadata {
         address: wallet.address().to_string(),
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),

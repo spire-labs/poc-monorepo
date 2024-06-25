@@ -23,7 +23,7 @@ pub struct PreconfirmationPayload {
     pub preconfer_contract: Address,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct PreconfirmationCommitment {
     pub preconfirmation_request: PreconfirmationPayload,
     pub commitment: Signature,
@@ -31,24 +31,12 @@ pub struct PreconfirmationCommitment {
     pub block_number: U256,
 }
 
+// Used for recieving requests ONLY from the setup script
 #[derive(Deserialize, Serialize, Debug)]
-pub struct MetadatPayload {
-    pub data: Data,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Data {
-    pub challenge: String,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct RegisterEnforcerMetadata {
-    pub address: String, //TODO: type check for address
-    pub challenge_string: String,
-    pub signature: String, //TODO: type check for hex encoded string
-    pub name: String,
-    pub preconf_contracts: Vec<String>, //TODO: type check for address
-    pub url: String,                    //TODO: type check that is actually a url
+pub struct PrivilegedTransaction {
+    pub tx_hash: Bytes,
+    pub tx_content: Bytes,
+    pub signature: Bytes,
 }
 
 pub fn encode_preconf_payload(payload: &PreconfirmationPayload) -> Bytes {
@@ -84,14 +72,27 @@ pub async fn request_preconfirmation(
     info!("Received request: {:?}", payload);
 
     let db = state.db;
+
+    // checks the tx is valid, makes state changes
     let transaction_result = payload.transaction.execute_transaction(&db).await;
 
     if let Err(e) = transaction_result {
         error!("Transaction execution failed: {}", e);
         return (StatusCode::BAD_REQUEST, format!("Transaction Error: {}", e)).into_response();
     }
-
     drop(transaction_result);
+
+    let tip_tx_result = payload.tip_tx.execute_transaction(&db).await;
+
+    if let Err(e) = tip_tx_result {
+        error!("Tip transaction execution failed: {}", e);
+        return (
+            StatusCode::BAD_REQUEST,
+            format!("Tip Transaction Error: {}", e),
+        )
+            .into_response();
+    }
+    drop(tip_tx_result);
 
     let pv_key = match env::var("PRIVATE_KEY") {
         Ok(key) => key,
@@ -122,14 +123,15 @@ pub async fn request_preconfirmation(
         }
     };
 
+    // Pushes the txs to be added to the contract by the cron job
     let validity_txs = &state.validity_txs;
     let mut validity_txs = validity_txs
         .lock()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
 
-    validity_txs.push(payload.transaction.clone());
-    validity_txs.push(payload.tip_tx.clone());
+	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.transaction.clone());
+	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.tip_tx.clone());
 
     let block_number = {
         let mut block_num = state.block_num.lock().unwrap();
@@ -149,6 +151,7 @@ pub async fn request_preconfirmation(
         .into_response()
 }
 
+// Removed in favor of register_with_gateway in main.rs
 /*
 pub async fn metadata(Json(payload): Json<MetadatPayload>) -> impl IntoResponse {
     let pv_key = match env::var("PRIVATE_KEY") {
@@ -192,13 +195,8 @@ pub async fn metadata(Json(payload): Json<MetadatPayload>) -> impl IntoResponse 
 }
 */
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct PrivilegedTransaction {
-    pub tx_hash: Bytes,
-    pub tx_content: Bytes,
-    pub signature: Bytes,
-}
-
+// Used by the setup script to affect state. The transaction must still be valid.
+// DOES NOT return preconfirmations or post to Contract
 pub async fn apply_tx(Json(payload): Json<PrivilegedTransaction>) -> StatusCode {
     let db_path = match env::var("DB") {
         Ok(path) => path,
