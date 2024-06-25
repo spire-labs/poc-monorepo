@@ -11,7 +11,7 @@ TODO (megan):
 - [x] test out functionality with hosted Anvil instance
 - [x] add Spire wallet/poc-infra/smart contracts to monorepo (useful commands for this include `rm -rf .git` inside the folder for the app added, then `git rm --cached path/to/app` from parent folder, followed by `git add path/to/app`)
 - [x] make sure the apps are up to date with the latest in all individual repos, announce to the team that we now build in the monorepo only
-~~- [ ] bring env vars out of individual apps into one consolidated file?~~
+- ~~[ ] bring env vars out of individual apps into one consolidated file?~~
 - [ ] write additional scripts (makefile?) to spin up all apps in monorepo
 - [ ] add setup instructions in READMEs all apps for development purposes
 - [ ] add TODOs in all READMEs for getting the monorepo ready for release
