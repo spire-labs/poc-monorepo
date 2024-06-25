@@ -1,18 +1,4 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: enforcer_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=enforcer
-    volumes:
-      - ./postgres:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
-    ports:
-      - '5436:5432'
-    networks:
-      - shared_network
-
   enforcer:
     build:
       context: ../.. #requires context from monorepo root for spvm-rs lib dependency
@@ -22,8 +8,6 @@ services:
       - ./.env
     ports:
       - '1235:5555'
-    depends_on:
-      - postgres
     networks:
       - shared_network
 
