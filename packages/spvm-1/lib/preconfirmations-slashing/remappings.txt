@@ -1,0 +1,7 @@
+@openzeppelin/contracts/=../openzeppelin-contracts/contracts/
+ds-test/=../openzeppelin-contracts/lib/forge-std/lib/ds-test/src/
+erc4626-tests/=../openzeppelin-contracts/lib/erc4626-tests/
+forge-std/=../forge-std/src/
+openzeppelin-contracts/=../openzeppelin-contracts/
+election-contract/=../election-contract/src/
+spvm-1/=lib/spvm-1/src/
