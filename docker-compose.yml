@@ -13,33 +13,33 @@ services:
     networks:
       - shared_network
 
-  postgres_enforcer:
-    image: postgres:16
-    container_name: enforcer_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=enforcer
-    volumes:
-      - ./postgres_enforcer:/var/lib/postgresql/data
-    ports:
-      - '5436:5432'
-    networks:
-      - shared_network
+  #postgres_enforcer:
+    #image: postgres:16
+    #container_name: enforcer_db
+    #environment:
+      #- POSTGRES_USER=postgres
+      #- POSTGRES_PASSWORD=postgres
+      #- POSTGRES_DB=enforcer
+    #volumes:
+      #- ./postgres_enforcer:/var/lib/postgresql/data
+    #ports:
+      #- '5436:5432'
+    #networks:
+      #- shared_network
 
-  postgres_proposer:
-    image: postgres:16
-    container_name: proposer_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=proposer
-    volumes:
-      - ./postgres_proposer:/var/lib/postgresql/data
-    ports:
-      - '5437:5432'
-    networks:
-      - shared_network
+  #postgres_proposer:
+    #image: postgres:16
+    #container_name: proposer_db
+    #environment:
+      #- POSTGRES_USER=postgres
+      #- POSTGRES_PASSWORD=postgres
+      #- POSTGRES_DB=proposer
+    #volumes:
+      #- ./postgres_proposer:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    #ports:
+      #- '5437:5432'
+    #networks:
+      #- shared_network
 
   gateway_api:
     build:
@@ -63,7 +63,7 @@ services:
     ports:
       - '1235:5555'
     depends_on:
-      - postgres_enforcer
+      #- postgres_enforcer
       - gateway_api
     networks:
       - shared_network
@@ -76,8 +76,8 @@ services:
       - apps/proposer/.env
     ports:
       - '7777:7777'
-    depends_on:
-      - postgres_proposer
+    #depends_on:
+      #- postgres_proposer
     networks:
       - shared_network
 

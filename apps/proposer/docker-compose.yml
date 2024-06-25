@@ -1,17 +1,17 @@
 services:
-  postgres:
-    image: postgres:16
-    container_name: proposer_db
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=proposer
-    volumes:
-      - ./postgres:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
-    ports:
-      - '5437:5432'
-    networks:
-      - shared_network
+  #postgres:
+    #image: postgres:16
+    #container_name: proposer_db
+    #environment:
+      #- POSTGRES_USER=postgres
+      #- POSTGRES_PASSWORD=postgres
+      #- POSTGRES_DB=proposer
+    #volumes:
+      #- ./postgres:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
+    #ports:
+      #- '5437:5432'
+    #networks:
+      #- shared_network
 
   proposer:
     build:
@@ -22,8 +22,8 @@ services:
       - .env
     ports:
       - '7777:7777'
-    depends_on:
-      - postgres
+    #depends_on:
+      #- postgres
     networks:
       - shared_network
 

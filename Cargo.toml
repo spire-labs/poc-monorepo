@@ -6,6 +6,3 @@ members = [
     "apps/proposer",
     ]
 resolver = "2"
-
-#[workspace.dependencies]
-#spvm-rs = { path = "packages/spvm-rs" }
