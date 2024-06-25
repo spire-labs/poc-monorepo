@@ -6,7 +6,6 @@ on:
   push:
     branches: 
       - dev
-      - main
       
   pull_request:
     branches: 
@@ -14,9 +13,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  FOUNDRY_PROFILE: ci
 
 jobs:
-  build:
+  cargo-build:
 
     runs-on: ubuntu-latest
 
@@ -24,3 +24,31 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build all apps
       run: cargo build -v
+
+forge-build:
+
+    runs-on: ubuntu-latest
+    name: Build and test smart contracts
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          cd packages/spvm-1
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          cd packages/spvm-1
+          forge test -vvv
+        id: test
