@@ -2,7 +2,7 @@ use ethers::{
     contract::abigen,
     core::abi::{decode, encode, ParamType, Token},
     middleware::SignerMiddleware,
-    providers::{Http, Provider},
+    providers::{Http, Middleware, Provider},
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, Signature, TxHash, U256},
     utils::keccak256,
@@ -16,12 +16,14 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::{self, Duration};
 
+#[derive(Debug)]
 struct TxEncoded {
     tx_content: TxContentEncoded,
     tx_hash: TxHash,
     signature: Bytes,
 }
 
+#[derive(Debug)]
 struct TxContentEncoded {
     from: Address,
     tx_type: u8,
@@ -39,9 +41,14 @@ struct TxContentEncoded {
 // }
 
 struct AppState {
+    appchain_a: Appchain,
+    appchain_b: Appchain,
+    db: DatabaseConnection,
+}
+
+struct Appchain {
     parent_hash: [u8; 32],
     block_number: u32,
-    db: DatabaseConnection,
 }
 
 #[tokio::main]
@@ -60,8 +67,14 @@ async fn main() {
         .unwrap_or(0u32);
 
     let app_state = AppState {
-        parent_hash: [0u8; 32],
-        block_number: start_block_num,
+        appchain_a: Appchain {
+            parent_hash: [0u8; 32],
+            block_number: start_block_num,
+        },
+        appchain_b: Appchain {
+            parent_hash: [0u8; 32],
+            block_number: start_block_num,
+        },
         db,
     };
 
@@ -76,18 +89,76 @@ async fn main() {
     loop {
         interval.tick().await;
 
+        let provider_url = env::var("PROVIDER").unwrap();
+        let provider = Provider::<Http>::try_from(provider_url).unwrap();
+        let client = Arc::new(provider);
+
+        let block_num = client.get_block_number().await.unwrap().as_u32();
+
         let state = Arc::clone(&shared_state);
         tokio::spawn(async move {
             let mut guard = state.lock().await;
-            let txs = get_validity_conditions(guard.block_number).await.unwrap();
+            let a_txs = get_validity_conditions(block_num /* L1 Block number */, true)
+                .await
+                .unwrap();
+            let b_txs = get_validity_conditions(block_num /* L1 Block number */, false)
+                .await
+                .unwrap();
 
-            for tx in &txs {
+            let mut new_b_txs: Vec<Transaction> = b_txs;
+
+            for tx in &a_txs {
+                tx.execute_transaction(&guard.db).await.unwrap();
+                // check for certain tx to sponsor
+                let pv_key = env::var("PRIVATE_KEY").unwrap();
+                let wallet = LocalWallet::from_str(&pv_key)
+                    .unwrap()
+                    .with_chain_id(31337u64);
+                // is transfer?
+                // is to address this address?
+                if let TransactionParams::Transfer(tx_params) = tx.tx_content.tx_param.clone() {
+                    if tx_params.to == wallet.address() {
+                        // nowe we know this transaction is a bridge, next step is to check if it is a cross-chain swap or just a simple bridge
+                        // for thie PoC, we assume every transfer with an odd amount is a bridge
+                        if tx_params.amount % 2 == 1 {
+                            // bridge
+                            // construct a transfer transaction on appchain B that sends the bridged amount of the same token to the from address
+                            // add it to new_b_txs
+                            let new_tx = create_transfer_transaction(
+                                &tx_params.token_ticker,
+                                &wallet,
+                                tx.tx_content.from,
+                                tx_params.amount,
+                                get_nonce_on_appchain(false).await.unwrap(),
+                            );
+
+                            new_b_txs.push(new_tx);
+                        } else {
+                            // cross-chain swap
+                            // construct a transfer transaction on appchain B that sends the bridged amount of a different token to the from address
+                            // add it to new_b_txs
+
+                            let new_tx = create_transfer_transaction(
+                                env::var("BRIDGE_TICKER").unwrap().as_str(),
+                                &wallet,
+                                tx.tx_content.from,
+                                env::var("BRIDGE_AMOUNT").unwrap().parse::<u16>().unwrap(),
+                                get_nonce_on_appchain(false).await.unwrap(),
+                            );
+
+                            new_b_txs.push(new_tx);
+                        }
+                    }
+                }
+            }
+            for tx in &new_b_txs {
                 tx.execute_transaction(&guard.db).await.unwrap();
             }
 
-            let encoded_txs = encode_transactions(&txs);
+            let a_encoded_txs = encode_transactions(&a_txs);
+            let b_encoded_txs = encode_transactions(&new_b_txs);
 
-            let txs = txs
+            let a_txs = a_txs
                 .iter()
                 .map(|tx| TxEncoded {
                     tx_hash: tx.tx_hash,
@@ -101,25 +172,131 @@ async fn main() {
                 })
                 .collect();
 
-            let new_hash = propose_block(txs, encoded_txs, guard.parent_hash, guard.block_number)
-                .await
-                .unwrap();
+            let b_txs = new_b_txs
+                .iter()
+                .map(|tx| TxEncoded {
+                    tx_hash: tx.tx_hash,
+                    tx_content: TxContentEncoded {
+                        from: tx.tx_content.from,
+                        tx_type: tx.tx_content.tx_type,
+                        tx_param: encode_tx_params(&tx.tx_content.tx_param),
+                        nonce: tx.tx_content.nonce,
+                    },
+                    signature: tx.signature.to_vec().into(),
+                })
+                .collect();
 
-            guard.parent_hash = new_hash;
-            guard.block_number += 2;
+            let a_new_hash = propose_block(
+                a_txs,
+                a_encoded_txs,
+                guard.appchain_a.parent_hash,
+                guard.appchain_a.block_number,
+                true,
+            )
+            .await
+            .unwrap();
+            let b_new_hash = propose_block(
+                b_txs,
+                b_encoded_txs,
+                guard.appchain_b.parent_hash,
+                guard.appchain_b.block_number,
+                false,
+            )
+            .await
+            .unwrap();
+
+            guard.appchain_a.parent_hash = a_new_hash;
+            guard.appchain_b.parent_hash = b_new_hash;
+
+            guard.appchain_a.block_number += 2;
+            guard.appchain_b.block_number += 2;
         });
+    }
+}
+
+fn create_transfer_transaction(
+    ticker: &str,
+    from: &LocalWallet,
+    to: Address,
+    amount: u16,
+    nonce: u32,
+) -> Transaction {
+    create_transaction(
+        from,
+        1,
+        TransactionParams::Transfer(TransferTransactionParams {
+            token_ticker: ticker.to_string(),
+            to,
+            amount,
+        }),
+        nonce,
+    )
+}
+
+async fn get_nonce_on_appchain(appchain_a: bool) -> Result<u32, Box<dyn std::error::Error>> {
+    let provider_url = env::var("PROVIDER")?;
+    let provider = Provider::<Http>::try_from(provider_url)?;
+    let client = Arc::new(provider);
+
+    let spvm = if appchain_a {
+        env::var("SPVM_ADDRESS_A")?
+    } else {
+        env::var("SPVM_ADDRESS_B")?
+    };
+
+    let spvm_address = spvm.parse::<Address>()?;
+
+    abigen!(Spvm, "contracts/SPVM.json");
+
+    let spvm = Spvm::new(spvm_address, client.clone());
+
+    let pv_key = env::var("PRIVATE_KEY")?;
+    let wallet = LocalWallet::from_str(&pv_key)?.with_chain_id(31337u64);
+
+    let nonce = spvm.nonces(wallet.address()).call().await?;
+
+    Ok(nonce)
+}
+
+fn create_transaction(
+    signer: &LocalWallet,
+    tx_type: u8,
+    tx_param: TransactionParams,
+    nonce: u32,
+) -> Transaction {
+    let tx_content = TransactionContent {
+        from: signer.address(),
+        tx_type,
+        tx_param,
+        nonce,
+    };
+
+    let message = encode_tx_content(&tx_content);
+    let tx_hash = TxHash::from_slice(&keccak256(message));
+    let signature = signer.sign_hash(tx_hash).unwrap();
+
+    Transaction {
+        tx_content,
+        tx_hash,
+        signature,
     }
 }
 
 async fn get_validity_conditions(
     block_num: u32,
+    appchain_a: bool,
 ) -> Result<Vec<spvm_rs::Transaction>, Box<dyn std::error::Error>> {
     abigen!(Slashing, "contracts/Slashing.json");
     let provider_url = env::var("PROVIDER")?;
     let provider = Provider::<Http>::try_from(provider_url)?;
     let client = Arc::new(provider);
 
-    let slashing_address = env::var("SLASHING_ADDRESS")?;
+    let slashing_address: String = if appchain_a {
+        env::var("SLASHING_ADDRESS_A")?
+    } else {
+        env::var("SLASHING_ADDRESS_B")?
+    };
+
     let slashing_address = slashing_address.parse::<Address>()?;
 
     let slashing = Slashing::new(slashing_address, client.clone());
@@ -128,7 +305,7 @@ async fn get_validity_conditions(
         .get_validity_conditions(U256::from(block_num))
         .call()
         .await?;
-    // println!("validity_conditions: {:?}", validity_conditions);
+    println!("validity_conditions: {:?}", validity_conditions);
 
     let mut spvm_txs = Vec::new();
 
@@ -164,6 +341,7 @@ async fn propose_block(
     tx_encoded: Bytes,
     parent_hash: [u8; 32],
     block_number: u32,
+    appchain_a: bool,
 ) -> Result<[u8; 32], Box<dyn std::error::Error>> {
     let tx_hash = keccak256(&tx_encoded);
 
@@ -179,7 +357,12 @@ async fn propose_block(
     let signer = SignerMiddleware::new(provider, wallet);
     let client = Arc::new(signer);
 
-    let spvm = env::var("SPVM_ADDRESS")?;
+    let spvm = if appchain_a {
+        env::var("SPVM_ADDRESS_A")?
+    } else {
+        env::var("SPVM_ADDRESS_B")?
+    };
+
     let spvm_address = spvm.parse::<Address>()?;
 
     abigen!(Spvm, "contracts/SPVM.json");
@@ -200,6 +383,16 @@ async fn propose_block(
             signature: tx.signature.clone(),
         })
         .collect();
+
+    let mut block_num = client.get_block_number().await?.as_u64();
+
+    while block_num % 2 != 1 {
+        time::sleep(Duration::from_secs(1)).await;
+        block_num = client.get_block_number().await?.as_u64();
+    }
+
+    println!("block_num: {:?}", block_num);
+    println!("txs: {:?}", txs);
 
     let _ = spvm
         .propose_block(Block {

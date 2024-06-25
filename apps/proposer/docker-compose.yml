@@ -19,7 +19,7 @@ services:
       dockerfile: ./apps/proposer/Dockerfile
     container_name: proposer
     env_file:
-      - .env
+      - ./.env
     ports:
       - '7777:7777'
     depends_on:
