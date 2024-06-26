@@ -4,6 +4,7 @@ members = [
     "apps/enforcer",
     "apps/gateway-api",
     "apps/proposer",
+    "scripts/utils",
     ]
 resolver = "2"
 
