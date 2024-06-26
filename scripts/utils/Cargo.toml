@@ -1,0 +1,21 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ethers = { version="2.0.14", features = ["legacy"] }
+tokio = { version = "1.0", features = ["full"] }
+dotenvy = "0.15.7"
+ethers-core = "2.0.14"
+
+[[bin]]
+name = "get_balance"
+path = "src/get_balance.rs"
+
+[[bin]]
+name = "get_info_from_priv_key"
+path = "src/get_info_from_priv_key.rs"
+
