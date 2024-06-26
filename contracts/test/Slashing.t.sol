@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "lib/forge-std/src/Test.sol";
-import "./ElectionContract.sol";
+import "../src/ElectionContract.sol";
 import "src/Slashing.sol";
 
 contract SlashingTest is Test {

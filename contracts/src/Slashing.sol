@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./PreconfirmationsTypes.sol";
-import "poc-election-contract/ElectionContract.sol";
+import "./ElectionContract.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 contract Slashing {
@@ -76,7 +76,10 @@ contract Slashing {
     function submitValidityConditions(
         Transaction[] calldata transactions
     ) external {
-        require(block.number % 2 == 1, "only accept validity conditions on odd L1 block numbers");
+        require(
+            block.number % 2 == 1,
+            "only accept validity conditions on odd L1 block numbers"
+        );
         require(
             election_contract.getWinner(block.number) == msg.sender,
             "Only the elected enforcer can submit validity conditions"
@@ -94,10 +97,7 @@ contract Slashing {
             );
             // check that the transaction hash is correct
             bytes32 txHash = keccak256(abi.encode(transaction.tx_content));
-            require(
-                txHash == transaction.tx_hash,
-                "Invalid transaction hash"
-            );
+            require(txHash == transaction.tx_hash, "Invalid transaction hash");
             validity_conditions[block.number].push(transaction);
         }
     }
