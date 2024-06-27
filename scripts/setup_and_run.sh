@@ -30,6 +30,9 @@ pip install --upgrade pip
 # Install the dependencies
 pip install -r requirements.txt
 
+echo "Installing OpenZeppelin contracts"
+forge install OpenZeppelin/openzeppelin-contracts
+
 # Run the main script
 python demo_setup_script.py
 

@@ -268,9 +268,6 @@ def main():
         ("spvm-1", "git@github.com:spire-labs/spvm-1.git"),
         ("poc-preconfirmations-slashing", "git@github.com:spire-labs/poc-preconfirmations-slashing.git"),
         ("poc-election-contract", "git@github.com:spire-labs/poc-election-contract.git"),
-        ("gateway-api", "git@github.com:spire-labs/gateway-api.git"),
-        ("spvm-rs", "git@github.com:spire-labs/spvm-rs.git"),
-        ("enforcer", "git@github.com:spire-labs/enforcer.git")
     ]
 
     # Clone or pull repositories
@@ -300,30 +297,7 @@ def main():
     slashing_contract_abi = load_abi(base_dir, abi_paths["slashing"])
     print("loaded slashing abi")
 
-
-    # Sets env var for rust
-    os.environ["DATABASE_URL"] = "postgresql://postgres:spire2024@35.223.80.2/spire-poc-demo"
-    # TODO: Set the necessary port env vars and RPC vars
-
-    # toml files need to be updated to point to local versions of repos
-    # enforcer
-    enforcer_repo_dir = os.path.expanduser('~/spire-poc/repos/enforcer')
-    enforcer_cargo_toml_path = os.path.join(enforcer_repo_dir, 'Cargo.toml')
-    if os.path.exists(enforcer_cargo_toml_path):
-        update_cargo_toml(enforcer_cargo_toml_path)
-    else:
-        print(f"Cargo.toml file not found in {enforcer_cargo_toml_path}")
-
-    # TODO: Parameterize this to run a specified PORT if we run multiple instances
-    build_rust_project('~/spire-poc/repos/spvm-rs')
-    # run_rust_project('~/spire-poc/repos/spvm-rs')
-    build_rust_project('~/spire-poc/repos/enforcer')
-    run_rust_project('~/spire-poc/repos/enforcer')
-    build_rust_project('~/spire-poc/repos/gateway-api')
-    run_rust_project('~/spire-poc/repos/gateway-api')
-
     CHAIN_A_PORT = 8545
-    # CHAIN_A_PORT = 8546
 
     # Start Anvil chains
     anvil_chain_1 = start_anvil(CHAIN_A_PORT)
@@ -333,14 +307,9 @@ def main():
     chain_a_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
     chain_a_web3 = Web3(Web3.HTTPProvider(chain_a_anvil_url))
 
-    # chain_b_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
-    # chain_b_web3 = Web3(Web3.HTTPProvider(chain_b_anvil_url))
-
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
-    # if not chain_b_web3.is_connected():
-    #     print("Failed to connect to the Chain B Anvil instance")
 
     # Deploy contracts
     print("Deploying SPVM...")
@@ -457,7 +426,6 @@ def main():
     
     # Subscribe to new block headers
     chain_a_block_filter = chain_a_web3.eth.filter('latest')
-    # chain_b_block_filter = chain_b_web3.eth.filter('latest')
     # start API
     CORS(app)
     app.run(host='0.0.0.0', port=5000)
