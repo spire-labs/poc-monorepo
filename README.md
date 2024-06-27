@@ -92,14 +92,47 @@ cargo run
 2024-06-26T16:10:45.837453Z  INFO enforcer: Successfully submitted validity condition.
 ```
 
+## spvm-1
+
+```shell
+git submodule update
+cd apps/spvm-1
+forge build
+```
+
 # Addresses Used
 
 Here is the list of [addresses](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737?pvs=4#d327fa44da264312ad8ac3bebae25c4a) used in the PoC, along with their private keys (may want to remove this when making this repo public, and add instructions for people to setup their own anvil node and generate their own wallets).
 
-# Environment Configuration
-
-TODO - For now see individual app READMEs and/or .env.example files.
-
 # Testing
 
-TODO
+## Enforcer
+
+```shell
+cd apps/enforcer
+cargo test
+```
+
+## Gateway API
+
+```shell
+cd apps/gateway-api
+cargo test
+```
+
+## Proposer
+
+```shell
+cd apps/proposer
+cargo test
+```
+
+## spvm-1
+
+You must have `forge` [installed](https://book.getfoundry.sh/getting-started/installation)
+
+```shell
+cd apps/spvm-1
+forge build
+forge test
+```

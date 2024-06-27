@@ -9,7 +9,7 @@ services:
     volumes:
       - ./postgres_gatewayapi:/var/lib/postgresql/data
     ports:
-      - '5435:5432'
+      - "5435:5432"
     networks:
       - shared_network
 
@@ -46,11 +46,7 @@ services:
     env_file:
       - apps/proposer/.env
     ports:
-<<<<<<< HEAD
-      - '7777:7777'
-=======
       - "7777:7777"
->>>>>>> ed/draft-merge
     networks:
       - shared_network
 

@@ -54,7 +54,8 @@ struct Appchain {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    let db = Database::connect("sqlite::memory:").await.unwrap();
+    let db_path = env::var("DB").unwrap();
+    let db = Database::connect(db_path).await.unwrap();
     Migrator::up(&db, None)
         .await
         .expect("Database migration failed");

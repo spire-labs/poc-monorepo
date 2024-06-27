@@ -94,7 +94,8 @@ async fn main() {
         }
     });
 
-    let db = Database::connect("sqlite::memory:").await.unwrap();
+    let db_path = env::var("DB").unwrap();
+    let db = Database::connect(db_path).await.unwrap();
 
     Migrator::up(&db, None)
         .await
@@ -263,9 +264,11 @@ mod tests {
     use tower::ServiceExt;
 
     async fn setup() -> (LocalWallet, DatabaseConnection) {
+        dotenv().ok();
         let wallet0 = LocalWallet::new(&mut thread_rng());
 
-        let db = Database::connect("sqlite::memory:").await.unwrap();
+        let db_path = env::var("DB").unwrap();
+        let db = Database::connect(db_path).await.unwrap();
         setup_schema(&db).await;
 
         (wallet0, db)
@@ -383,35 +386,38 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn metadata() {
-        let db_path = env::var("DB").unwrap();
+    // TODO not implemented API endpoint yet, uncomment when implemented
+    // #[tokio::test]
+    // async fn metadata() {
+    //     dotenv().ok();
+    //     let db_path = env::var("DB").unwrap();
 
-        let db = Database::connect(db_path).await.unwrap();
-        let app = app(db);
+    //     let db = Database::connect(db_path).await.unwrap();
+    //     let app = app(db);
 
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .method(http::Method::POST)
-                    .uri("/metadata")
-                    .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                    .body(Body::from(
-                        serde_json::to_vec(&json!({
-                            "challange": "hello"
-                        }))
-                        .unwrap(),
-                    ))
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+    //     let response = app
+    //         .oneshot(
+    //             Request::builder()
+    //                 .method(http::Method::POST)
+    //                 .uri("/metadata")
+    //                 .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+    //                 .body(Body::from(
+    //                     serde_json::to_vec(&json!({
+    //                         "challenge": "hello"
+    //                     }))
+    //                     .unwrap(),
+    //                 ))
+    //                 .unwrap(),
+    //         )
+    //         .await
+    //         .unwrap();
 
-        assert_eq!(response.status(), StatusCode::OK);
-    }
+    //     assert_eq!(response.status(), StatusCode::OK);
+    // }
 
     #[tokio::test]
     async fn request_preconfirmation() {
+        dotenv().ok();
         let db_path = env::var("DB").unwrap();
 
         let db = Database::connect(db_path).await.unwrap();
@@ -445,6 +451,7 @@ mod tests {
 
     #[tokio::test]
     async fn request_preconfirmation_fail() {
+        dotenv().ok();
         let db_path = env::var("DB").unwrap();
 
         let db = Database::connect(db_path).await.unwrap();
