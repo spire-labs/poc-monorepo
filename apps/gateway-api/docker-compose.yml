@@ -24,7 +24,7 @@ services:
     ports:
       - "5433:5433" # Map external port 5432 to internal port 5432, which is what axum server uses
     depends_on:
-      - postgres
+      - postgres_gatewayapi
     networks:
       - shared_network
 
