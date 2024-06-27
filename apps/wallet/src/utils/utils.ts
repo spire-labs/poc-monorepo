@@ -80,6 +80,7 @@ export async function getBalancesForAllTokens(walletAddress: address, tokensAndC
 export async function getBalanceForToken(walletAddress: address, tokenTicker: string, rollupContract: address): Promise<RequestBalanceResponse> {
     try {
       // Perform the fetch request
+      console.log("RPC URL: " + process.env.REACT_APP_API_URL)
       const response = await fetch(`${process.env.REACT_APP_API_URL}/request_balance?address=${walletAddress}&token_ticker=${tokenTicker}&rollup_contract=${rollupContract}`, {
           method: 'GET', // Since curl uses GET by default
           headers: {

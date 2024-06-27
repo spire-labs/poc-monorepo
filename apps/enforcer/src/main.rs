@@ -208,6 +208,7 @@ async fn register_with_gateway() {
     let gateway_ip = env::var("GATEWAY_IP").unwrap();
     let client = reqwest::Client::new();
 
+    println!("gateway_ip: {:?}", gateway_ip);
     let challenge_string: MetadatPayload = client
         .get(format!("{}/enforcer_metadata", gateway_ip))
         .send()

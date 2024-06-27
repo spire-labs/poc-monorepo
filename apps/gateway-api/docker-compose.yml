@@ -1,5 +1,5 @@
 services:
-  postgres:
+  postgres_gatewayapi:
     image: postgres:16
     container_name: gatewayapi_db
     environment:
@@ -10,7 +10,7 @@ services:
       - ./postgres:/var/lib/postgresql/data # persist the postgres data to disk so we don't lose it
     # on rebuilds
     ports:
-      - '5435:5432'
+      - "5435:5432"
     networks:
       - shared_network
 
@@ -19,10 +19,10 @@ services:
       context: ../.. #requires context from monorepo root for spvm-rs lib dependency
       dockerfile: ./apps/gateway-api/Dockerfile
     container_name: gateway_api
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/gatewayapi
+    env_file:
+      - ./.env
     ports:
-      - '5433:5433' # Map external port 5432 to internal port 5432, which is what axum server uses
+      - "5433:5433" # Map external port 5432 to internal port 5432, which is what axum server uses
     depends_on:
       - postgres
     networks:

@@ -30,6 +30,11 @@ cp apps/enforcer/.env.docker apps/enforcer/.env
 cp apps/gateway-api/.env.docker apps/gateway-api/.env
 cp apps/proposer/.env.docker apps/proposer/.env
 docker compose up
+# in a separate tab
+cd apps/wallet
+cp .env.development .env
+npm i
+npm run start
 ```
 
 # Development Setup
@@ -40,7 +45,7 @@ For example, if you are working on the enforcer, you can run the enforcer locall
 
 ```shell
 cp apps/gateway-api/.env.docker apps/gateway-api/.env
-docker compose up gateway-api
+docker compose up gateway_api
 # then in another tab
 cp apps/proposer/.env.docker apps/proposer/.env
 docker compose up proposer
@@ -98,6 +103,14 @@ cargo run
 git submodule update
 cd apps/spvm-1
 forge build
+```
+
+## Common Errors
+
+If you see `failed to solve: error from sender: open /poc-monorepo/apps/gateway-api/postgres: permission denied`, just change the permissions
+
+```shell
+sudo chmod -R 777 apps/gateway-api/postgres
 ```
 
 # Addresses Used
