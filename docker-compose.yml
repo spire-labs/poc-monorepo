@@ -20,7 +20,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres_gatewayapi:5432/gatewayapi
     ports:
-      - '5433:5433' # Map external port 5433 to internal port 5433, which is what axum server uses
+      - "5433:5433" # Map external port 5433 to internal port 5433, which is what axum server uses
     depends_on:
       - postgres_gatewayapi
     networks:
@@ -33,7 +33,7 @@ services:
     env_file:
       - apps/enforcer/.env
     ports:
-      - '1235:5555'
+      - "1235:5555"
     depends_on:
       - gateway_api
     networks:
@@ -46,7 +46,11 @@ services:
     env_file:
       - apps/proposer/.env
     ports:
+<<<<<<< HEAD
       - '7777:7777'
+=======
+      - "7777:7777"
+>>>>>>> ed/draft-merge
     networks:
       - shared_network
 
