@@ -39,7 +39,7 @@ Note that this script used to be responsible for spinning up Rust repos as well 
 This will spin up an anvil node, deploy an ERC20 contract, and deploy the Spire contracts.
 
 
-## mac instructions
+## running scripts locally on a mac instructions
 To get things up and running quickly on a local mac, some one-time steps are done manually to simplify the script.  use the following instructions, starting in the root of the monorepo project.
 
 - Install forge/foundry if not already done
