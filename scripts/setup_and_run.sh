@@ -33,6 +33,10 @@ pip install -r requirements.txt
 echo "Installing OpenZeppelin contracts"
 forge install OpenZeppelin/openzeppelin-contracts
 
+# For demo 3, we need to compile a local erc20
+echo "Compiling ERC20 contract"
+forge build
+
 # Run the main script
 python demo_setup_script.py
 

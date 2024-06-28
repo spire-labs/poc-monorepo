@@ -27,6 +27,17 @@ docker-compose up
 
 TODO
 
+## Special instructions for running scripts
+The scripts in /scripts can be used to spin up an Anvil node and populate it with contracts. There are two in particular:
+
+`scripts/setup_and_run.sh`
+This is used to install all dependencies for the projects, spin up a python virtual env, and then execute `demo_setup_script.py`, which will deploy contracts to anvil and populate them with some initial data. Note that this script is designed to run on Linux, as it is using apt for its package manager. If you are on a Mac, additional instructions will be added below.
+
+Note that this script used to be responsible for spinning up Rust repos as well as contracts. Now that we have moved to using a monorepo, the script no longer handles any of the rust projects or their dependencies.
+
+`demo_setup_script.py`
+This will spin up an anvil node, deploy an ERC20 contract, and deploy the Spire contracts.
+
 
 ## Environment Configuration
 
