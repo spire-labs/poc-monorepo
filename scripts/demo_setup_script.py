@@ -16,6 +16,7 @@ chain_a_election_address = None
 chain_b_election_address = None
 chain_a_slashing_address = None
 chain_b_slashing_address = None
+l1_erc_20_address = None
 
 spvm_contract_abi = None
 election_contract_abi = None
@@ -265,7 +266,7 @@ def get_wallet_balance():
     })
 
 def main():
-    global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi
+    global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi, l1_erc_20_address
     home = Path.home()
     base_dir = home / "spire-poc/repos"
     
@@ -337,6 +338,8 @@ def main():
         print(f"Deployed ERC20 contract at address: {erc20_contract_address}")
     else:
         raise Exception("Error deploying ERC20 contract")
+
+    l1_erc_20_address = erc20_contract_address
 
 
 
