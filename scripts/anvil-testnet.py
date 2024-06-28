@@ -9,6 +9,11 @@ from pathlib import Path
 
 app = Flask(__name__)
 
+#
+# NOTE: THIS FILE IS ARCHIVED AND IS NO LONGER IN USE. USE demo_setup_script.py instead
+#
+
+
 # Variables to hold contract addresses. Retrievable via Flask API
 chain_a_spvm_address = None
 chain_b_spvm_address = None

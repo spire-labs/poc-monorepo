@@ -3,6 +3,9 @@
 # Note, ensure VM has valid ssh creds for github, otherwise this script will fail
 # Note, assumes forge and anvil are already installed on VM
 
+# NOTE: THIS FILE IS ARCHIVED AND IS NO LONGER IN USE. USE setup_and_run.sh instead
+
+
 # clone repos if they do not exist
 if [ ! -d "$HOME/spire-poc/repos" ]; then
   echo "Cloning repos"
