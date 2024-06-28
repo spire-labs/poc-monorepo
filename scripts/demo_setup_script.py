@@ -208,8 +208,8 @@ def load_abi_and_bytecode(json_path):
 def deploy_contract(web3, bytecode, abi, constructor_args):
     tx_hash = web3.eth.contract(
         abi=abi, bytecode=bytecode
-    ).constructor(*constructor_args).transact()
-    tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    ).constructor(*constructor_args).transact({"from": DEFAULT_ANVIL_UNLOCKED_ADDRESS})
+    tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     return tx_receipt.contractAddress
 
 
