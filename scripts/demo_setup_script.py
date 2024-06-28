@@ -268,8 +268,10 @@ def get_wallet_balance():
 def main():
     global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi, l1_erc_20_address
     home = Path.home()
-    base_dir = home / "spire-poc/repos"
-    
+    # base_dir = home / "spire-poc/repos"
+    # for running locally, just use home
+    base_dir = home
+
     # from flask import Flask, jsonify
     from web3 import Web3
     from flask_cors import CORS
@@ -325,8 +327,10 @@ def main():
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
+
     # Deploy ERC20 contract
-    erc20_abi_path = base_dir / "poc-monorepo" / "out" / "ERC20.sol" / "Token.json"
+    # erc20_json_path = base_dir / "poc-monorepo" / "out" / "ERC20.sol" / "Token.json"
+    erc20_json_path = Path("..") / "out" / "ERC20.sol" / "Token.json"
     erc20_contract_abi, erc20_bytecode = load_abi_and_bytecode(erc20_json_path)
 
     initial_supply = 1000000 * 10**18  # 1 million tokens with 18 decimals
