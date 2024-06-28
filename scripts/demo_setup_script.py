@@ -200,6 +200,20 @@ def run_rust_project(project_dir):
     print(f"Rust API running in background with PID: {process.pid}")
 
 
+def load_abi_and_bytecode(json_path):
+    with open(json_path) as f:
+        contract_data = json.load(f)
+    return contract_data["abi"], contract_data["bytecode"]["object"]
+
+def deploy_contract(web3, bytecode, abi, constructor_args):
+    tx_hash = web3.eth.contract(
+        abi=abi, bytecode=bytecode
+    ).constructor(*constructor_args).transact()
+    tx_receipt = web3.eth.waitForTransactionReceipt(tx_hash)
+    return tx_receipt.contractAddress
+
+
+
 # public api routes
 # TODO: Update to include chain information as well
 @app.route('/contracts', methods=['GET'])
@@ -310,6 +324,21 @@ def main():
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
+    # Deploy ERC20 contract
+    erc20_abi_path = base_dir / "poc-monorepo" / "out" / "ERC20.sol" / "Token.json"
+    erc20_contract_abi, erc20_bytecode = load_abi_and_bytecode(erc20_json_path)
+
+    initial_supply = 1000000 * 10**18  # 1 million tokens with 18 decimals
+    erc20_contract_address = deploy_contract(
+        chain_a_web3, erc20_bytecode, erc20_contract_abi, [initial_supply]
+    )
+
+    if erc20_contract_address:
+        print(f"Deployed ERC20 contract at address: {erc20_contract_address}")
+    else:
+        raise Exception("Error deploying ERC20 contract")
+
+
 
     # Deploy contracts
     print("Deploying SPVM...")
