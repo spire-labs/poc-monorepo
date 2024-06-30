@@ -7,7 +7,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - '1235:5555'
+      - "1235:5555"
     networks:
       - shared_network
 

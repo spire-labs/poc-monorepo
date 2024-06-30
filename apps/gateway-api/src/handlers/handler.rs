@@ -100,6 +100,7 @@ pub async fn request_preconfirmation(
     let provider = match Provider::<Http>::try_from(provider_url) {
         Ok(provider) => provider,
         Err(e) => {
+            println!("Error creating provider: {:?}", e);
             return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };
@@ -122,6 +123,7 @@ pub async fn request_preconfirmation(
     {
         next_enforcer = add;
     } else {
+        println!("Error getting winner");
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
 
@@ -131,12 +133,14 @@ pub async fn request_preconfirmation(
     let pv_key = match env::var("PRIVATE_KEY") {
         Ok(key) => key,
         Err(e) => {
+            println!("Error getting private key: {:?}", e);
             return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };
     let wallet = match pv_key.parse::<LocalWallet>() {
         Ok(wallet) => wallet,
         Err(_e) => {
+            println!("Error parsing private key");
             return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };
@@ -166,6 +170,7 @@ pub async fn request_preconfirmation(
     let signed_tip_tx = match wallet.sign_hash(tip_hash) {
         Ok(sig) => sig,
         Err(e) => {
+            println!("Error signing tip tx: {:?}", e);
             return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };

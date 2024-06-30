@@ -438,6 +438,8 @@ pub fn decode_transaction_params(
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use super::Transaction;
     use super::*;
     use sea_orm::{entity::prelude::*, Database, DbBackend, Schema};
@@ -450,7 +452,8 @@ mod tests {
     async fn setup() -> (LocalWallet, DatabaseConnection) {
         let wallet0 = LocalWallet::new(&mut thread_rng());
 
-        let db = Database::connect("sqlite::memory:").await.unwrap();
+        let db_path = env::var("DB").unwrap();
+        let db = Database::connect(db_path).await.unwrap();
         setup_schema(&db).await;
 
         (wallet0, db)
