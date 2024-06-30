@@ -9,6 +9,11 @@ from pathlib import Path
 
 app = Flask(__name__)
 
+#
+# NOTE: THIS FILE IS ARCHIVED AND IS NO LONGER IN USE. USE demo_setup_script.py instead
+#
+
+
 # Variables to hold contract addresses. Retrievable via Flask API
 chain_a_spvm_address = None
 chain_b_spvm_address = None
@@ -292,9 +297,6 @@ def main():
         ("spvm-1", "git@github.com:spire-labs/spvm-1.git"),
         ("poc-preconfirmations-slashing", "git@github.com:spire-labs/poc-preconfirmations-slashing.git"),
         ("poc-election-contract", "git@github.com:spire-labs/poc-election-contract.git"),
-        ("gateway-api", "git@github.com:spire-labs/gateway-api.git"),
-        ("spvm-rs", "git@github.com:spire-labs/spvm-rs.git"),
-        ("enforcer", "git@github.com:spire-labs/enforcer.git")
     ]
 
     # Clone or pull repositories
@@ -324,18 +326,6 @@ def main():
     slashing_contract_abi = load_abi(base_dir, abi_paths["slashing"])
     print("loaded slashing abi")
 
-
-    # Sets env var for rust
-    os.environ["DATABASE_URL"] = "postgresql://postgres:spire2024@35.223.80.2/spire-poc-demo"
-    # rust build for enforcer
-    # TODO: Parameterize this to run a specified PORT if we run multiple instances
-    #build_rust_project('~/spire-poc/repos/spvm-rs')
-    # run_rust_project('~/spire-poc/repos/enforcer')
-    #build_rust_project('~/spire-poc/repos/enforcer')
-    # run_rust_project('~/spire-poc/repos/enforcer')
-    #build_rust_project('~/spire-poc/repos/gateway-api')
-    # run_rust_project('~/spire-poc/repos/gateway-api')
-
     CHAIN_A_PORT = 8545
     # CHAIN_A_PORT = 8546
 
@@ -347,14 +337,10 @@ def main():
     chain_a_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
     chain_a_web3 = Web3(Web3.HTTPProvider(chain_a_anvil_url))
 
-    # chain_b_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
-    # chain_b_web3 = Web3(Web3.HTTPProvider(chain_b_anvil_url))
 
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
-    # if not chain_b_web3.is_connected():
-    #     print("Failed to connect to the Chain B Anvil instance")
 
     # Deploy contracts
     print("Deploying SPVM...")
@@ -477,7 +463,6 @@ def main():
     
     # Subscribe to new block headers
     chain_a_block_filter = chain_a_web3.eth.filter('latest')
-    # chain_b_block_filter = chain_b_web3.eth.filter('latest')
     # start API
     CORS(app)
     app.run(host='0.0.0.0', port=5000)
@@ -487,12 +472,7 @@ def main():
             block = chain_a_web3.eth.get_block(block_hash)
             # TODO: SPVM blocks happen on even L1 block numbers, validity conditions are posted on odd L1 block numbers.
             handle_new_block(block, chain_a_election_contract, chain_a_web3)
-        # for block_hash in chain_b_block_filter.get_new_entries():
-        #     block = chain_b_web3.eth.get_block(block_hash)
-        #     # TODO: SPVM blocks happen on even L1 block numbers, validity conditions are posted on odd L1 block numbers.
-        #     handle_new_block(block, chain_b_election_contract, chain_b_web3)
 
 
 if __name__ == "__main__":
     main()
-    # app.run(host='0.0.0.0', port=5000)

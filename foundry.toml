@@ -1,0 +1,5 @@
+[profile.default]
+src = "scripts/contracts"
+out = "out"
+libs = ["lib"]
+

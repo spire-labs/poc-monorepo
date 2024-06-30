@@ -16,6 +16,7 @@ chain_a_election_address = None
 chain_b_election_address = None
 chain_a_slashing_address = None
 chain_b_slashing_address = None
+l1_erc_20_address = None
 
 spvm_contract_abi = None
 election_contract_abi = None
@@ -200,6 +201,20 @@ def run_rust_project(project_dir):
     print(f"Rust API running in background with PID: {process.pid}")
 
 
+def load_abi_and_bytecode(json_path):
+    with open(json_path) as f:
+        contract_data = json.load(f)
+    return contract_data["abi"], contract_data["bytecode"]["object"]
+
+def deploy_contract(web3, bytecode, abi, constructor_args):
+    tx_hash = web3.eth.contract(
+        abi=abi, bytecode=bytecode
+    ).constructor(*constructor_args).transact({"from": DEFAULT_ANVIL_UNLOCKED_ADDRESS})
+    tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+    return tx_receipt.contractAddress
+
+
+
 # public api routes
 # TODO: Update to include chain information as well
 @app.route('/contracts', methods=['GET'])
@@ -251,10 +266,12 @@ def get_wallet_balance():
     })
 
 def main():
-    global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi
+    global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi, l1_erc_20_address
     home = Path.home()
-    base_dir = home / "spire-poc/repos"
-    
+    # base_dir = home / "spire-poc/repos"
+    # for running locally, just use home
+    base_dir = home
+
     # from flask import Flask, jsonify
     from web3 import Web3
     from flask_cors import CORS
@@ -268,9 +285,6 @@ def main():
         ("spvm-1", "git@github.com:spire-labs/spvm-1.git"),
         ("poc-preconfirmations-slashing", "git@github.com:spire-labs/poc-preconfirmations-slashing.git"),
         ("poc-election-contract", "git@github.com:spire-labs/poc-election-contract.git"),
-        ("gateway-api", "git@github.com:spire-labs/gateway-api.git"),
-        ("spvm-rs", "git@github.com:spire-labs/spvm-rs.git"),
-        ("enforcer", "git@github.com:spire-labs/enforcer.git")
     ]
 
     # Clone or pull repositories
@@ -300,30 +314,7 @@ def main():
     slashing_contract_abi = load_abi(base_dir, abi_paths["slashing"])
     print("loaded slashing abi")
 
-
-    # Sets env var for rust
-    os.environ["DATABASE_URL"] = "postgresql://postgres:spire2024@35.223.80.2/spire-poc-demo"
-    # TODO: Set the necessary port env vars and RPC vars
-
-    # toml files need to be updated to point to local versions of repos
-    # enforcer
-    enforcer_repo_dir = os.path.expanduser('~/spire-poc/repos/enforcer')
-    enforcer_cargo_toml_path = os.path.join(enforcer_repo_dir, 'Cargo.toml')
-    if os.path.exists(enforcer_cargo_toml_path):
-        update_cargo_toml(enforcer_cargo_toml_path)
-    else:
-        print(f"Cargo.toml file not found in {enforcer_cargo_toml_path}")
-
-    # TODO: Parameterize this to run a specified PORT if we run multiple instances
-    build_rust_project('~/spire-poc/repos/spvm-rs')
-    # run_rust_project('~/spire-poc/repos/spvm-rs')
-    build_rust_project('~/spire-poc/repos/enforcer')
-    run_rust_project('~/spire-poc/repos/enforcer')
-    build_rust_project('~/spire-poc/repos/gateway-api')
-    run_rust_project('~/spire-poc/repos/gateway-api')
-
     CHAIN_A_PORT = 8545
-    # CHAIN_A_PORT = 8546
 
     # Start Anvil chains
     anvil_chain_1 = start_anvil(CHAIN_A_PORT)
@@ -333,14 +324,28 @@ def main():
     chain_a_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
     chain_a_web3 = Web3(Web3.HTTPProvider(chain_a_anvil_url))
 
-    # chain_b_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
-    # chain_b_web3 = Web3(Web3.HTTPProvider(chain_b_anvil_url))
-
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
-    # if not chain_b_web3.is_connected():
-    #     print("Failed to connect to the Chain B Anvil instance")
+
+    # Deploy ERC20 contract
+    # erc20_json_path = base_dir / "poc-monorepo" / "out" / "ERC20.sol" / "Token.json"
+    erc20_json_path = Path("..") / "out" / "ERC20.sol" / "Token.json"
+    erc20_contract_abi, erc20_bytecode = load_abi_and_bytecode(erc20_json_path)
+
+    initial_supply = 1000000 * 10**18  # 1 million tokens with 18 decimals
+    erc20_contract_address = deploy_contract(
+        chain_a_web3, erc20_bytecode, erc20_contract_abi, [initial_supply]
+    )
+
+    if erc20_contract_address:
+        print(f"Deployed ERC20 contract at address: {erc20_contract_address}")
+    else:
+        raise Exception("Error deploying ERC20 contract")
+
+    l1_erc_20_address = erc20_contract_address
+
+
 
     # Deploy contracts
     print("Deploying SPVM...")
@@ -457,7 +462,6 @@ def main():
     
     # Subscribe to new block headers
     chain_a_block_filter = chain_a_web3.eth.filter('latest')
-    # chain_b_block_filter = chain_b_web3.eth.filter('latest')
     # start API
     CORS(app)
     app.run(host='0.0.0.0', port=5000)
