@@ -10,6 +10,7 @@ ethers = { version="2.0.14", features = ["legacy"] }
 tokio = { version = "1.0", features = ["full"] }
 dotenvy = "0.15.7"
 ethers-core = "2.0.14"
+alloy-sol-types = "0.7.6"
 
 [[bin]]
 name = "get_balance"
@@ -19,3 +20,10 @@ path = "src/get_balance.rs"
 name = "get_info_from_priv_key"
 path = "src/get_info_from_priv_key.rs"
 
+[[bin]]
+name = "get_winner"
+path = "src/get_winner.rs"
+
+[[bin]]
+name = "read_revert"
+path = "src/read_revert.rs"

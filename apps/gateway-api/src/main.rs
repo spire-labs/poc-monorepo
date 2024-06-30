@@ -1,3 +1,4 @@
+use ethers::providers::{Http, Middleware, Provider};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use std::env;
@@ -38,11 +39,14 @@ async fn main() {
 
     let shared_data = Arc::new(Mutex::new(contract_data));
 
+    let provider_url = env::var("RPC_URL").expect("PROVIDER is not set in .env file");
+    let provider = Provider::<Http>::try_from(provider_url).unwrap();
+    let current_block = provider.get_block_number().await.unwrap();
     let app_state = AppState {
         db: Arc::new(database),
         contract_data: shared_data,
         nonce: Arc::new(Mutex::new(0)),
-        block_number: Arc::new(Mutex::new(0)),
+        block_number: Arc::new(Mutex::new(current_block.clone().as_u64())),
     };
 
     println!("here we go!");
