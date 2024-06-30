@@ -6,6 +6,7 @@ use ethers::{
     providers::{Http, Provider},
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, TxHash},
+	utils::keccak256,
 };
 use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
@@ -70,7 +71,8 @@ async fn main() {
     dotenv().ok();
 
     let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
-
+	
+	tokio::time::sleep(Duration::from_secs(10)).await;
     register_with_gateway().await;
 
     let validity_txs_clone = Arc::clone(&validity_txs);
@@ -223,9 +225,10 @@ async fn register_with_gateway() {
     let pv_key = env::var("PRIVATE_KEY").unwrap();
     let wallet = pv_key.parse::<LocalWallet>().unwrap();
     let commitment = wallet
-        .sign_message(challenge_string.data.challenge.as_bytes())
-        .await
+        .sign_hash(TxHash::from(keccak256(challenge_string.data.challenge.as_bytes())))
         .unwrap();
+
+    println!("commitment: {:?}", commitment);
 
     let resp = RegisterEnforcerMetadata {
         address: wallet.address().to_string(),
@@ -233,15 +236,28 @@ async fn register_with_gateway() {
         signature: commitment.to_string(),
         name: env::var("ENFORCER_NAME").unwrap(),
         preconf_contracts: vec![env::var("PRECONF_CONTRACT").unwrap()],
-        url: local_ip().unwrap().to_string(),
+        url: String::from("http://enforcer:5555"),
     };
 
-    let _ = client
+    let ack = client
         .post(format!("{}/enforcer_metadata", gateway_ip))
         .json(&resp)
         .send()
-        .await
-        .unwrap();
+.await;
+
+    match ack {
+        Ok(response) => {
+            if response.status().is_success() {
+                println!("Registered with gateway, data {:?}", resp);
+                println!("Gateway ack {:?}", response.text().await.unwrap());
+            } else {
+                println!("Failed to register with gateway, error: {:?}", response.text().await.unwrap());
+            }
+        }
+        Err(e) => {
+            println!("Error occurred while registering with gateway: {:?}", e);
+        }
+    }
 }
 
 #[cfg(test)]

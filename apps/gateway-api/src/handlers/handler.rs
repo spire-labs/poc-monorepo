@@ -6,14 +6,14 @@ use ethers::{
     contract::abigen,
     providers::{Http, Provider},
     signers::{LocalWallet, Signer},
-    types::{Address, Signature, TxHash, U256},
+    types::{Address, Signature, TxHash, U256, H160},
     utils::keccak256,
 };
 use ethers_contract::Contract;
 use k256::ecdsa::{RecoveryId, Signature as Secp256k1Signature, VerifyingKey};
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde_json::{json, Value};
-use sha3::{Digest, Keccak256};
+use sha3::{Digest, Keccak256, digest::generic_array::GenericArray, digest::typenum::U32};
 use spvm_rs::*;
 use std::env;
 use std::str::FromStr;
@@ -96,7 +96,7 @@ pub async fn request_preconfirmation(
     // get the address of the next enforcer
     abigen!(Election, "contracts/ElectionContract.json");
 
-    let provider_url = env::var("PROVIDER").unwrap();
+    let provider_url = env::var("RPC_URL").unwrap();
     let provider = match Provider::<Http>::try_from(provider_url) {
         Ok(provider) => provider,
         Err(e) => {
@@ -122,6 +122,7 @@ pub async fn request_preconfirmation(
         .await
     {
         next_enforcer = add;
+		println!("Next Enforcer: {:?}", next_enforcer);
     } else {
         println!("Error getting winner");
         return StatusCode::INTERNAL_SERVER_ERROR;
@@ -293,13 +294,15 @@ pub async fn get_enforcer_url_by_address(
     address: String,
     db: &DatabaseConnection,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let ip = enforcer_metadata::Entity::find()
-        .filter(enforcer_metadata::Column::Address.eq(address))
-        .one(db)
-        .await?
-        .unwrap();
+    let query = QueryDB::get_enforcer_by_address(db, address)
+            .await
+            .unwrap();
+	println!("Query: {:?}", query);
 
-    Ok(ip.url)
+    let ip = query.map(|model| model.url).ok_or("IP not found")?;
+	println!("IP: {:?}", ip);
+
+    Ok(ip)
 }
 
 // returns the wei value of the tip
@@ -411,28 +414,36 @@ pub async fn register_enforcer(
 
     let msg = payload.challenge_string.as_bytes();
 
+	/*
     let hex_sig = hex::decode(payload.signature.clone()).map_err(|e| to_hex_error(e))?;
     let signature_slice = hex_sig.as_slice();
-    let signature =
-        Secp256k1Signature::from_slice(signature_slice).map_err(|e| to_ecdsa_error(e))?;
-    println!("{:?}", signature);
 
-    let recovery_id = RecoveryId::try_from(0u8).map_err(|e| to_ecdsa_error(e))?;
-    println!("{:?}", recovery_id);
+    // Split the signature into r, s, and v components
+    let r = GenericArray::clone_from_slice(&signature_slice[0..32]);
+    let s = GenericArray::clone_from_slice(&signature_slice[32..64]);
+    let v = signature_slice[64];
+
+    let signature = Secp256k1Signature::from_scalars(r, s).map_err(|e| to_ecdsa_error(e))?;
+    let recovery_id = RecoveryId::try_from(v % 27).map_err(|e| to_ecdsa_error(e))?;
 
     let recovered_vk =
         VerifyingKey::recover_from_digest(Keccak256::new_with_prefix(msg), &signature, recovery_id)
             .unwrap();
 
     let key_point = recovered_vk.to_encoded_point(false);
-    println!("{:?}", key_point.to_bytes());
+    println!("Recovered Public Key: {:?}", key_point.to_bytes());
     let pub_key = key_point.as_bytes();
 
     let pub_key_hash = keccak256(&pub_key[1..]); //TODO: refactor so we don't use keccak from two different places (ethers/sha3)
     let recovered_address =
         // Have to format H160 to lower hex because of some display issues, otherwise value gets truncated
         format!("{:#x}", Address::from_slice(&pub_key_hash[12..32])).to_string();
-    println!("{:?}", recovered_address);
+    println!("Recovered Address: {:?}", recovered_address);
+	*/
+
+	let signature = Signature::from_str(&payload.signature.clone()).unwrap();
+	let recovered_address = signature.recover(keccak256(msg)).unwrap().to_string();
+	println!("Recovered Address: {:?}", recovered_address);
 
     if enforcer_address == recovered_address {
         //lookup enforcer info in database. If already included in db ignore, else store enforcer info.
@@ -462,3 +473,4 @@ pub async fn register_enforcer(
         return Err(to_wrong_enforcer_address_error());
     }
 }
+
