@@ -24,10 +24,70 @@ slashing_contract_abi = None
 # TODO: For testing purposes until gateway is setup
 spvm_test_contract = None
 
+
+# List of standard addresses for gateway, wallet, enforcers, proposers, etc
+# All addresses are test addresses - no real eth is at stake, which is why pks may appear in this codebase
+# Default Anvil Test Addresses
+# Available Accounts
+# ==================
+
+# (0) 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000.000000000000000000 ETH)
+# (1) 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000.000000000000000000 ETH)
+# (2) 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000.000000000000000000 ETH)
+# (3) 0x90F79bf6EB2c4f870365E785982E1f101E93b906 (10000.000000000000000000 ETH)
+# (4) 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (10000.000000000000000000 ETH)
+# (5) 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc (10000.000000000000000000 ETH)
+# (6) 0x976EA74026E726554dB657fA54763abd0C3a0aa9 (10000.000000000000000000 ETH)
+# (7) 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 (10000.000000000000000000 ETH)
+# (8) 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f (10000.000000000000000000 ETH)
+# (9) 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (10000.000000000000000000 ETH)
+
+# Private Keys
+# ==================
+
+# (0) 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# (1) 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+# (2) 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+# (3) 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+# (4) 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
+# (5) 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba
+# (6) 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e
+# (7) 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356
+# (8) 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
+# (9) 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
+
+# Account created outside of Anvil - may need to have ETH transferred to it
+ENFORCER_PRIVATE_KEY="0xdaafc7ff176bcb11eddfb1e6238ffe292e0e7fb9b9809a40b187c840776dd7b1"
+ENFORCER_ADDRESS="0x4253252263d15e795263458c0b85d63a0bf465df"
+
+# Test account (2)
+PROPOSER_1_PRIVATE_KEY="0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+PROPOSER_1_ADDRESS="0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+
+# Test account (3)
+PROPOSER_2_PRIVATE_KEY="0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
+PROPOSER_2_ADDRESS="0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+
+# Test account (4)
+PROPOSER_3_PRIVATE_KEY="0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"
+PROPOSER_3_ADDRESS="0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+
+# Test account (5)
+PROPOSER_4_PRIVATE_KEY="0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba"
+PROPOSER_4_ADDRESS="0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+
+# Test account (1)
+GATEWAY_PRIVATE_KEY="0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+GATEWAY_ADDRESS="0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
+
+# Test account (0) - default used for deploying contracts, etc
 DEFAULT_ANVIL_UNLOCKED_ADDRESS = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
+# Test account (9) - used in wallet FE
 DEFAULT_AVNIL_USER_WALLET_ADDRESS = "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
 DEFAULT_ANVIL_USER_WALLET_PK = "0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+
+
 
 def run_command(command):
     try:
@@ -405,7 +465,7 @@ def main():
     # deploy slashing contract
     slashing_repo_path = base_dir / "poc-preconfirmations-slashing"
 
-    test_enforcer_address = chain_a_web3.eth.accounts[0]
+    test_enforcer_address = ENFORCER_ADDRESS
 
     chain_a_slashing_deploy_output = run_command(f"cd {slashing_repo_path} && forge create src/Slashing.sol:Slashing --constructor-args {test_enforcer_address} --rpc-url http://localhost:{CHAIN_A_PORT} --unlocked --from {DEFAULT_ANVIL_UNLOCKED_ADDRESS} --gas-limit 20000000")
 
@@ -443,9 +503,9 @@ def main():
 
 
     # initialize proposers for chain A
-    initialize_proposers(chain_a_election_contract, proposer_a_address="0x70997970C51812dc3A010C7d01b50e0d17dc79C8", proposer_b_address="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", web3=chain_a_web3)
+    initialize_proposers(chain_a_election_contract, proposer_a_address=PROPOSER_1_ADDRESS, proposer_b_address=PROPOSER_2_ADDRESS, web3=chain_a_web3)
     # initialize proposers for chain B
-    initialize_proposers(chain_b_election_contract, proposer_a_address="0x90F79bf6EB2c4f870365E785982E1f101E93b906", proposer_b_address="0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65", web3=chain_a_web3)
+    initialize_proposers(chain_b_election_contract, proposer_a_address=PROPOSER_3_ADDRESS, proposer_b_address=PROPOSER_4_ADDRESS, web3=chain_a_web3)
 
     # test initialize some mints
     # initialize_tokens(chain_a_spvm_contract, chain_a_spvm_address, chain_a_web3)
