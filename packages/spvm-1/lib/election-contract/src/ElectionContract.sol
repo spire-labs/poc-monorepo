@@ -33,7 +33,10 @@ contract ElectionContract is ElectionInterface {
 
     /// @notice Sets the default recipient for tickets.
     function setDefaultRecipient(address _default_recipient) external {
-        require(msg.sender == minter, "Only the minter can set the default recipient");
+        require(
+            msg.sender == minter,
+            "Only the minter can set the default recipient"
+        );
         default_recipient = _default_recipient;
     }
 
@@ -55,7 +58,7 @@ contract ElectionContract is ElectionInterface {
         uint block_number
     ) internal view returns (uint256) {
         require(
-            block_number > block.number - 292,
+            block_number > (block.number < 292 ? 0 : block.number - 292),
             "Cannot query blocks older than 292 blocks"
         );
 
@@ -63,10 +66,15 @@ contract ElectionContract is ElectionInterface {
 
         // get historical supply of tickets at the given block number
         block_number -= block_number % 2 == 0 ? 1 : 0;
-        uint historical_supply = _max(ticket.historical_supply_at(block_number), 1); 
+        uint historical_supply = _max(
+            ticket.historical_supply_at(block_number),
+            1
+        );
 
         // get the historical block hash at the seed block for the given block number
-        uint historical_block_hash = uint(blockhash(block_number - 64));
+        uint historical_block_hash = uint(
+            blockhash(block_number < 64 ? 0 : block_number - 64)
+        );
 
         uint winner_token_id = historical_block_hash % historical_supply;
 
