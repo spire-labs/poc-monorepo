@@ -8,7 +8,6 @@ use ethers::{
     types::{Address, Bytes, TxHash},
     utils::keccak256,
 };
-use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use serde::{Deserialize, Serialize};
@@ -17,7 +16,6 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
-use std::str::FromStr;
 
 mod api;
 
@@ -150,19 +148,19 @@ async fn submit_validity_condition(
         extracted
     };
 
-	let provider_url = env::var("PROVIDER")?;
+    let provider_url = env::var("PROVIDER")?;
 
-	let provider = Provider::<Http>::try_from(provider_url)?;
-	let client = SignerMiddleware::new(
-		provider,
-		env::var("PRIVATE_KEY")
-			.unwrap()
-			.parse::<LocalWallet>()
-			.unwrap()
-			.with_chain_id(31337u64),
-	);
+    let provider = Provider::<Http>::try_from(provider_url)?;
+    let client = SignerMiddleware::new(
+        provider,
+        env::var("PRIVATE_KEY")
+            .unwrap()
+            .parse::<LocalWallet>()
+            .unwrap()
+            .with_chain_id(31337u64),
+    );
 
-	abigen!(Slashing, "contracts/Slashing.json");
+    abigen!(Slashing, "contracts/Slashing.json");
 
     for (preconf_add, txs) in validity_txs.iter() {
         let transactions: Vec<TxEncoded> = txs
@@ -204,22 +202,22 @@ async fn submit_validity_condition(
             .await?
             .await?;
     }
-    
-	// if validity_txs.is_empty() {
-	// 	let empty_transactions: Vec<Transaction> = Vec::new();
-	// 	let slashing_contracts = vec![Address::from_str("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9").unwrap()];
-		
-	// 	for &preconf_add in &slashing_contracts {
-	// 		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
-	// 		let _ = contract
-	// 			.submit_validity_conditions(empty_transactions.clone())
-	// 			.send()
-	// 			.await?
-	// 			.await?;
-	// 	}
-	// }
 
-	Ok(())
+    // if validity_txs.is_empty() {
+    // 	let empty_transactions: Vec<Transaction> = Vec::new();
+    // 	let slashing_contracts = vec![Address::from_str("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9").unwrap()];
+
+    // 	for &preconf_add in &slashing_contracts {
+    // 		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
+    // 		let _ = contract
+    // 			.submit_validity_conditions(empty_transactions.clone())
+    // 			.send()
+    // 			.await?
+    // 			.await?;
+    // 	}
+    // }
+
+    Ok(())
 }
 
 async fn register_with_gateway() {
