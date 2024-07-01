@@ -6,7 +6,7 @@ use ethers::{
     providers::{Http, Provider},
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, TxHash},
-	utils::keccak256,
+    utils::keccak256,
 };
 use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
@@ -72,8 +72,8 @@ async fn main() {
     dotenv().ok();
 
     let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
-	
-	tokio::time::sleep(Duration::from_secs(10)).await;
+
+    tokio::time::sleep(Duration::from_secs(10)).await;
     register_with_gateway().await;
 
     let validity_txs_clone = Arc::clone(&validity_txs);
@@ -241,25 +241,28 @@ async fn register_with_gateway() {
     let pv_key = env::var("PRIVATE_KEY").unwrap();
     let wallet = pv_key.parse::<LocalWallet>().unwrap();
     let commitment = wallet
-        .sign_hash(TxHash::from(keccak256(challenge_string.data.challenge.as_bytes())))
+        .sign_hash(TxHash::from(keccak256(
+            challenge_string.data.challenge.as_bytes(),
+        )))
         .unwrap();
 
     println!("commitment: {:?}", commitment);
 
+    let enforcer_url = env::var("ENFORCER_URL").unwrap_or("http://enforcer:5555".to_string());
     let resp = RegisterEnforcerMetadata {
         address: wallet.address().to_string(),
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),
         name: env::var("ENFORCER_NAME").unwrap(),
         preconf_contracts: vec![env::var("PRECONF_CONTRACT").unwrap()],
-        url: String::from("http://enforcer:5555"),
+        url: enforcer_url,
     };
 
     let ack = client
         .post(format!("{}/enforcer_metadata", gateway_ip))
         .json(&resp)
         .send()
-.await;
+        .await;
 
     match ack {
         Ok(response) => {
@@ -267,7 +270,10 @@ async fn register_with_gateway() {
                 println!("Registered with gateway, data {:?}", resp);
                 println!("Gateway ack {:?}", response.text().await.unwrap());
             } else {
-                println!("Failed to register with gateway, error: {:?}", response.text().await.unwrap());
+                println!(
+                    "Failed to register with gateway, error: {:?}",
+                    response.text().await.unwrap()
+                );
             }
         }
         Err(e) => {
