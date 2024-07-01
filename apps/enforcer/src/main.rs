@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
+use std::str::FromStr;
 
 mod api;
 
@@ -149,6 +150,20 @@ async fn submit_validity_condition(
         extracted
     };
 
+	let provider_url = env::var("PROVIDER")?;
+
+	let provider = Provider::<Http>::try_from(provider_url)?;
+	let client = SignerMiddleware::new(
+		provider,
+		env::var("PRIVATE_KEY")
+			.unwrap()
+			.parse::<LocalWallet>()
+			.unwrap()
+			.with_chain_id(31337u64),
+	);
+
+	abigen!(Slashing, "contracts/Slashing.json");
+
     for (preconf_add, txs) in validity_txs.iter() {
         let transactions: Vec<TxEncoded> = txs
             .iter()
@@ -167,21 +182,7 @@ async fn submit_validity_condition(
             })
             .collect();
 
-        abigen!(Slashing, "contracts/Slashing.json");
-
-        let provider_url = env::var("PROVIDER")?;
-
-        let provider = Provider::<Http>::try_from(provider_url)?;
-        let client = SignerMiddleware::new(
-            provider,
-            env::var("PRIVATE_KEY")
-                .unwrap()
-                .parse::<LocalWallet>()
-                .unwrap()
-                .with_chain_id(31337u64),
-        );
-
-        let contract = Slashing::new(*preconf_add, Arc::new(client));
+        let contract = Slashing::new(*preconf_add, Arc::new(client.clone()));
 
         let transactions: Vec<Transaction> = transactions
             .into_iter()
@@ -203,7 +204,22 @@ async fn submit_validity_condition(
             .await?
             .await?;
     }
-    Ok(())
+    
+	// if validity_txs.is_empty() {
+	// 	let empty_transactions: Vec<Transaction> = Vec::new();
+	// 	let slashing_contracts = vec![Address::from_str("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9").unwrap()];
+		
+	// 	for &preconf_add in &slashing_contracts {
+	// 		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
+	// 		let _ = contract
+	// 			.submit_validity_conditions(empty_transactions.clone())
+	// 			.send()
+	// 			.await?
+	// 			.await?;
+	// 	}
+	// }
+
+	Ok(())
 }
 
 async fn register_with_gateway() {
