@@ -130,8 +130,14 @@ pub async fn request_preconfirmation(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
 
-	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.transaction.clone());
-	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.tip_tx.clone());
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(payload.transaction.clone());
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(payload.tip_tx.clone());
 
     let block_number = {
         let mut block_num = state.block_num.lock().unwrap();

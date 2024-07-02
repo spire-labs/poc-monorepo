@@ -3,7 +3,7 @@ use dotenv::dotenv;
 use ethers::{
     contract::abigen,
     middleware::SignerMiddleware,
-    providers::{Http, Provider},
+    providers::{Http, Middleware, Provider},
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, TxHash},
     utils::keccak256,
@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
+use std::str::FromStr;
 
 mod api;
 
@@ -151,7 +152,7 @@ async fn submit_validity_condition(
     let provider_url = env::var("PROVIDER")?;
 
     let provider = Provider::<Http>::try_from(provider_url)?;
-    let client = SignerMiddleware::new(
+    let signer = SignerMiddleware::new(
         provider,
         env::var("PRIVATE_KEY")
             .unwrap()
@@ -159,6 +160,14 @@ async fn submit_validity_condition(
             .unwrap()
             .with_chain_id(31337u64),
     );
+
+	let client = Arc::new(signer);
+
+	let mut block_num = client.get_block_number().await?.as_u64();
+	while block_num % 2 != 0 {
+		time::sleep(Duration::from_secs(1)).await;
+		block_num = client.get_block_number().await?.as_u64();
+	}
 
     abigen!(Slashing, "contracts/Slashing.json");
 
@@ -203,19 +212,19 @@ async fn submit_validity_condition(
             .await?;
     }
 
-    // if validity_txs.is_empty() {
-    // 	let empty_transactions: Vec<Transaction> = Vec::new();
-    // 	let slashing_contracts = vec![Address::from_str("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9").unwrap()];
+    if validity_txs.is_empty() {
+    	let empty_transactions: Vec<Transaction> = Vec::new();
+    	let slashing_contracts = vec![Address::from_str("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
 
-    // 	for &preconf_add in &slashing_contracts {
-    // 		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
-    // 		let _ = contract
-    // 			.submit_validity_conditions(empty_transactions.clone())
-    // 			.send()
-    // 			.await?
-    // 			.await?;
-    // 	}
-    // }
+    	for &preconf_add in &slashing_contracts {
+    		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
+    		let _ = contract
+    			.submit_validity_conditions(empty_transactions.clone())
+    			.send()
+    			.await?
+    			.await?;
+    	}
+    }
 
     Ok(())
 }
