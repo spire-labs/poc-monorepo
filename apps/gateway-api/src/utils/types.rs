@@ -23,6 +23,7 @@ pub struct SubmitPreconfirmationRequest {
     pub tx_hash: Bytes,
     pub tx_content: Bytes,
     pub signature: Bytes,
+    pub chain: String,
 }
 
 //Sent to enforcer after checking metadata associated with address

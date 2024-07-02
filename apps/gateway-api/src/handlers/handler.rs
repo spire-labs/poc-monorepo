@@ -89,7 +89,11 @@ pub async fn request_preconfirmation(
 
     let election_address = {
         let contract_data = state.contract_data.lock().unwrap();
-        contract_data.chain_a.election.address.clone()
+        if data.chain == "chain_a" {
+            contract_data.chain_a.election.address
+        } else {
+            contract_data.chain_b.election.address
+        }
     };
     // let election_abi = contract_data.chain_a.election.abi;
 
@@ -189,8 +193,14 @@ pub async fn request_preconfirmation(
     // get preconf contract address
     let preconfer_contract = {
         let contract_data = state.contract_data.lock().unwrap();
-        contract_data.chain_a.slashing.address.clone() // clone the data while we have the lock
+
+        if data.chain == "chain_a" {
+            contract_data.chain_a.slashing.address
+        } else {
+            contract_data.chain_b.slashing.address
+        }
     };
+
     // generate the preconf request object
     let preconf_request = PreconfirmationPayload {
         transaction: Transaction {
