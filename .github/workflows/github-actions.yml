@@ -11,11 +11,13 @@ on:
       - main
 
 jobs:
+
   cargo-build:
     runs-on: ubuntu-latest
+    name: Rust executables
     steps:
     - uses: actions/checkout@v4
-      name: Build all apps
+    - name: Build all apps
       run: cargo build
     - name: Test apps 
       run: cargo test
@@ -42,7 +44,9 @@ jobs:
         cd packages/spvm-1
         forge test -vvv
         id: test
+
   docker-build:
+    runs-on: ubuntu-latest
     name: Build docker images
     steps:
     - uses: actions/checkout@v4 
