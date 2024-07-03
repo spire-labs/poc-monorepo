@@ -38,12 +38,12 @@ jobs:
         cd packages/spvm-1
         forge --version
         forge build --sizes
-        id: build
+      id: build
     - name: Run Forge tests
       run: |
         cd packages/spvm-1
         forge test -vvv
-        id: test
+      id: test
 
   docker-build:
     runs-on: ubuntu-latest
