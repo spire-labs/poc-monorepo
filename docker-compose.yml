@@ -14,6 +14,7 @@ services:
       - shared_network
 
   gateway_api:
+    image: fluffypill0w/gateway_api
     build:
       dockerfile: apps/gateway-api/Dockerfile
     container_name: gateway_api
@@ -27,6 +28,7 @@ services:
       - shared_network
 
   enforcer:
+    image: fluffypill0w/enforcer
     build:
       dockerfile: apps/enforcer/Dockerfile
     container_name: enforcer
@@ -40,6 +42,7 @@ services:
       - shared_network
 
   proposer:
+    image: fluffypill0w/proposer
     build:
       dockerfile: apps/proposer/Dockerfile
     container_name: proposer
