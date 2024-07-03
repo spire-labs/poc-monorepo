@@ -1,26 +1,61 @@
 name: Spire PoC Monorepo
 run-name: ${{ github.actor }} is gmi 🚀
+
 on:
   workflow_dispatch: 
-  
   push:
     branches: 
       - dev
-      - main
-      
   pull_request:
     branches: 
       - main
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build:
 
+  cargo-build:
     runs-on: ubuntu-latest
-
+    name: Rust executables
     steps:
     - uses: actions/checkout@v4
     - name: Build all apps
-      run: cargo build -v
+      run: cargo build
+    - name: Test apps 
+      run: cargo test
+
+  forge-build:
+    runs-on: ubuntu-latest
+    name: Smart contracts
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+    - name: Run Forge build
+      run: |
+        cd packages/spvm-1
+        forge --version
+        forge build --sizes
+      id: build
+    - name: Run Forge tests
+      run: |
+        cd packages/spvm-1
+        forge test -vvv
+      id: test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Build docker images
+    steps:
+    - uses: actions/checkout@v4 
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with: 
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build and push docker images 
+      run: |
+        docker compose build
+        docker compose push
