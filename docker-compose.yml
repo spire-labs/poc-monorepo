@@ -14,7 +14,7 @@ services:
       - shared_network
 
   gateway_api:
-    image: fluffypill0w/gateway_api
+    image: "fluffypill0w/gateway_api:latest"
     build:
       dockerfile: apps/gateway-api/Dockerfile
     container_name: gateway_api
@@ -28,12 +28,12 @@ services:
       - shared_network
 
   enforcer:
-    image: fluffypill0w/enforcer
+    image: "fluffypill0w/enforcer:latest"
     build:
       dockerfile: apps/enforcer/Dockerfile
     container_name: enforcer
     env_file:
-      - apps/enforcer/.env
+      - apps/enforcer/.env.docker
     ports:
       - '1235:5555'
     depends_on:
@@ -42,12 +42,12 @@ services:
       - shared_network
 
   proposer:
-    image: fluffypill0w/proposer
+    image: "fluffypill0w/proposer:latest"
     build:
       dockerfile: apps/proposer/Dockerfile
     container_name: proposer
     env_file:
-      - apps/proposer/.env
+      - apps/proposer/.env.docker
     ports:
       - '7777:7777'
     networks:
