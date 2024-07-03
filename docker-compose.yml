@@ -1,4 +1,55 @@
-include:
-  - apps/gateway-api/docker-compose.yml
-  - apps/enforcer/docker-compose.yml
-  - apps/proposer/docker-compose.yml
+services:
+  postgres_gatewayapi:
+    image: postgres:16
+    container_name: gateway_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gatewayapi
+    volumes:
+      - ./postgres_gatewayapi:/var/lib/postgresql/data
+    ports:
+      - '5435:5432'
+    networks:
+      - shared_network
+
+  gateway_api:
+    build:
+      dockerfile: apps/gateway-api/Dockerfile
+    container_name: gateway_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres_gatewayapi:5432/gatewayapi
+    ports:
+      - '5433:5433' # Map external port 5433 to internal port 5433, which is what axum server uses
+    depends_on:
+      - postgres_gatewayapi
+    networks:
+      - shared_network
+
+  enforcer:
+    build:
+      dockerfile: apps/enforcer/Dockerfile
+    container_name: enforcer
+    env_file:
+      - apps/enforcer/.env
+    ports:
+      - '1235:5555'
+    depends_on:
+      - gateway_api
+    networks:
+      - shared_network
+
+  proposer:
+    build:
+      dockerfile: apps/proposer/Dockerfile
+    container_name: proposer
+    env_file:
+      - apps/proposer/.env
+    ports:
+      - '7777:7777'
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    external: true
