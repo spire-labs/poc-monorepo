@@ -548,7 +548,7 @@ export const UserWallet: React.FC = () => {
                     tx_hash: signedTx.transactionHash,
                     tx_content: signedTx.specialTx,
                     signature: signedTx.signature,
-                    target_chain: transferTxChain === chains[0]?.id ? "chain_a" : "chain_b"
+                    chain: transferTxChain === chains[0]?.id ? "chain_a" : "chain_b"
                   };
 
                   console.log("----------------GATEWAY API REQUEST----------------")

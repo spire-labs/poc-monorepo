@@ -1,13 +1,14 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use axum_macros::debug_handler;
 use dotenv::dotenv;
+use entity::nonces;
 use ethers::{
     core::abi::{encode, Token},
     core::utils::keccak256,
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, Signature, TxHash, U256},
 };
-use sea_orm::Database;
+use sea_orm::{Database, DatabaseConnection, DbBackend, EntityTrait, QueryFilter, Statement};
 use serde::{Deserialize, Serialize};
 use spvm_rs::{decode_tx_content, encode_tx_content, Transaction};
 use std::env;
@@ -73,6 +74,7 @@ pub async fn request_preconfirmation(
 
     let db = state.db;
 
+    println!("payload: {:?}", payload);
     // checks the tx is valid, makes state changes
     let transaction_result = payload.transaction.execute_transaction(&db).await;
 

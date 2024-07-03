@@ -1,6 +1,5 @@
 // create ethereum accounts
 
-use coins_bip39::English;
 use ethers::core::rand::thread_rng;
 use ethers::prelude::*;
 use ethers::signers::LocalWallet;
@@ -8,10 +7,9 @@ use ethers::{
     core::{types::TransactionRequest, utils::Anvil},
     providers::{Http, Middleware, Provider},
 };
-use eyre::Result;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let endpoint = "https://1rpc.io/sepolia";
 
     // connect to the network
@@ -23,6 +21,8 @@ async fn main() -> Result<()> {
     // Optionally, the wallet's chain id can be set, in order to use EIP-155
     // replay protection with different chains
     println!("Wallet address: {:#x}", wallet.address());
+    let address_string = format!("{:#x}", wallet.address());
+    println!("Wallet address: {:#?}", wallet.address().to_string());
     println!(
         "Wallet private key: {}",
         wallet

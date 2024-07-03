@@ -2,6 +2,7 @@ use axum::extract::Query;
 use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json};
 use axum_macros::debug_handler;
+use ethers::abi::Log;
 use ethers::{
     contract::abigen,
     providers::{Http, Provider},
@@ -18,6 +19,7 @@ use spvm_rs::*;
 use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
+use tracing_subscriber::fmt::format;
 
 use crate::router::AppState;
 use crate::services::{MutationDB, QueryDB};
@@ -51,7 +53,6 @@ pub async fn request_preconfirmation(
     data: Json<SubmitPreconfirmationRequest>,
 ) -> StatusCode {
     // for debugging purposes, print the data
-    // println!("{:?}", data);
     println!("[Debug] request_preconfirmation handler");
     let tx_content_string = data.tx_content.to_string();
     let tx_content_str = strip_0x_prefix(&tx_content_string);
@@ -70,11 +71,13 @@ pub async fn request_preconfirmation(
         tx_hash: Set(data.tx_hash.clone().to_string()),
         status: Set("PENDING".to_string()),
     };
+    println!("Transaction: {:?}", tx);
     match tx.insert(&*state.db).await {
         Ok(_) => (),
         Err(e) => {
             println!("Error inserting: {:?}", e);
-            return StatusCode::INTERNAL_SERVER_ERROR;
+            // do not return, sometimes request_preconfirmation gets called twice for some reason
+            // return StatusCode::INTERNAL_SERVER_ERROR;
         }
     };
 
@@ -213,9 +216,10 @@ pub async fn request_preconfirmation(
     };
 
     // send the preconf request to the enforcer's api url
-    let enforcer_url: String = get_enforcer_url_by_address(next_enforcer.to_string(), &state.db)
-        .await
-        .expect("Failed to get enforcer url");
+    let enforcer_url: String =
+        get_enforcer_url_by_address(format!("{:?}", next_enforcer), &state.db)
+            .await
+            .expect("Failed to get enforcer url");
 
     let mut preconf_commitment;
     // send preconf request to enforcer's api
@@ -368,7 +372,6 @@ pub async fn get_wallet_balance(
     } else {
         return Err(to_wrong_address_error());
     }
-
     let user_address: Address = params.address;
     let ticker = params.token_ticker.clone();
 
@@ -452,7 +455,7 @@ pub async fn register_enforcer(
     */
 
     let signature = Signature::from_str(&payload.signature.clone()).unwrap();
-    let recovered_address = signature.recover(keccak256(msg)).unwrap().to_string();
+    let recovered_address = format!("{:#x}", signature.recover(keccak256(msg)).unwrap());
     println!("Recovered Address: {:?}", recovered_address);
 
     if enforcer_address == recovered_address {

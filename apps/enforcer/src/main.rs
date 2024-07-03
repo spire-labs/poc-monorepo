@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 use spvm_rs::*;
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
-use std::str::FromStr;
 
 mod api;
 
@@ -161,13 +161,13 @@ async fn submit_validity_condition(
             .with_chain_id(31337u64),
     );
 
-	let client = Arc::new(signer);
+    let client = Arc::new(signer);
 
-	let mut block_num = client.get_block_number().await?.as_u64();
-	while block_num % 2 != 0 {
-		time::sleep(Duration::from_secs(1)).await;
-		block_num = client.get_block_number().await?.as_u64();
-	}
+    let mut block_num = client.get_block_number().await?.as_u64();
+    while block_num % 2 != 0 {
+        time::sleep(Duration::from_secs(1)).await;
+        block_num = client.get_block_number().await?.as_u64();
+    }
 
     abigen!(Slashing, "contracts/Slashing.json");
 
@@ -213,17 +213,18 @@ async fn submit_validity_condition(
     }
 
     if validity_txs.is_empty() {
-    	let empty_transactions: Vec<Transaction> = Vec::new();
-    	let slashing_contracts = vec![Address::from_str("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
+        let empty_transactions: Vec<Transaction> = Vec::new();
+        let slashing_contracts =
+            vec![Address::from_str("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
 
-    	for &preconf_add in &slashing_contracts {
-    		let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
-    		let _ = contract
-    			.submit_validity_conditions(empty_transactions.clone())
-    			.send()
-    			.await?
-    			.await?;
-    	}
+        for &preconf_add in &slashing_contracts {
+            let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
+            let _ = contract
+                .submit_validity_conditions(empty_transactions.clone())
+                .send()
+                .await?
+                .await?;
+        }
     }
 
     Ok(())
@@ -257,7 +258,7 @@ async fn register_with_gateway() {
 
     let enforcer_url = env::var("ENFORCER_URL").unwrap_or("http://enforcer:5555".to_string());
     let resp = RegisterEnforcerMetadata {
-        address: wallet.address().to_string(),
+        address: format!("{:#x}", wallet.address()),
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),
         name: env::var("ENFORCER_NAME").unwrap(),

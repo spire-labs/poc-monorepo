@@ -27,3 +27,7 @@ path = "src/get_winner.rs"
 [[bin]]
 name = "read_revert"
 path = "src/read_revert.rs"
+
+[[bin]]
+name = "create_accounts"
+path = "src/create_accounts.rs"
