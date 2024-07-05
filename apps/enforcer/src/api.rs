@@ -38,6 +38,7 @@ pub struct PrivilegedTransaction {
     pub tx_hash: Bytes,
     pub tx_content: Bytes,
     pub signature: Bytes,
+    pub preconfer_contract: Address,
 }
 
 pub fn encode_preconf_payload(payload: &PreconfirmationPayload) -> Bytes {
@@ -205,7 +206,10 @@ pub async fn metadata(Json(payload): Json<MetadatPayload>) -> impl IntoResponse 
 
 // Used by the setup script to affect state. The transaction must still be valid.
 // DOES NOT return preconfirmations or post to Contract
-pub async fn apply_tx(Json(payload): Json<PrivilegedTransaction>) -> StatusCode {
+pub async fn apply_tx(
+    State(state): State<AppState>,
+    Json(payload): Json<PrivilegedTransaction>,
+) -> StatusCode {
     let db_path = match env::var("DB") {
         Ok(path) => path,
         Err(e) => {
@@ -240,6 +244,17 @@ pub async fn apply_tx(Json(payload): Json<PrivilegedTransaction>) -> StatusCode 
     };
 
     let transaction_result = tx.execute_transaction(&db).await;
+
+    let validity_txs = &state.validity_txs;
+    let mut validity_txs = validity_txs
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .unwrap();
+
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(tx);
 
     if let Err(e) = transaction_result {
         error!("Transaction execution failed: {}", e);

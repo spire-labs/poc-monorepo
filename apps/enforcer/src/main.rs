@@ -133,10 +133,11 @@ fn app(db: DatabaseConnection) -> Router {
     Router::new()
         .route(
             "/request_preconfirmation",
-            post(api::request_preconfirmation).with_state(shared_state),
+            post(api::request_preconfirmation),
         )
         // .route("/metadata", post(api::metadata))
         .route("/apply_tx", post(api::apply_tx))
+        .with_state(shared_state)
 }
 
 async fn submit_validity_condition(
@@ -212,6 +213,7 @@ async fn submit_validity_condition(
             .await?;
     }
 
+	/*
     if validity_txs.is_empty() {
         let empty_transactions: Vec<Transaction> = Vec::new();
         let slashing_contracts =
@@ -226,6 +228,7 @@ async fn submit_validity_condition(
                 .await?;
         }
     }
+	*/
 
     Ok(())
 }
