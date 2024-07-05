@@ -1,5 +1,7 @@
 # Spire PoC Wallet
+This is a simple React frontend which creates transactions and sends them to the server pointed to by the `REACT_APP_API_URL` env var.
 
+## Setup
 To run locally, clone this repo and run:
 
 ```
