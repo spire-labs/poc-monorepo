@@ -1,12 +1,18 @@
 # poc-monorepo
 
+DISCLAIMER
+
+This software is provided as a proof of concept and is not intended for production use. The authors make no warranties or representations about the suitability of the software for any purpose. The software is provided "as is," without any express or implied warranties, including but not limited to the implied warranties of merchantability and fitness for a particular purpose.
+
+The use of this software is at your own risk. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+
 Spire PoC Monorepo!
 
 [Poc Spec](https://www.notion.so/spirelabs/Spire-Based-Stack-PoC-45ecd6a1afa44f8c8f28f086b42b08c5)
 
 [General PoC](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737)
 
-TODO (megan):
+TODO:
 
 - [x] finish creating a shared docker-compose.yml for all rust executables in monorepo (they live in the apps directory)
 - [x] set up github actions for PRs and pushes to main
