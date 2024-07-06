@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 import os
+import threading
 import subprocess
 import re
 import sys
@@ -519,18 +520,37 @@ def main():
     # - INFINITY on appchain A
     # - SUNSET on appchain B
 
+    def run_flask_app():
+        CORS(app)
+        app.run(host='0.0.0.0', port=5001)
+
+    def listen_for_new_blocks():
+        chain_a_block_filter = chain_a_web3.eth.filter('latest')
+        print("Listening for new blocks...")
+        while True:
+            for block_hash in chain_a_block_filter.get_new_entries():
+                block = chain_a_web3.eth.get_block(block_hash)
+                handle_new_block(block, chain_a_election_contract, chain_a_web3)
+
+    flask_thread = threading.Thread(target=run_flask_app)
+    block_listener_thread = threading.Thread(target=listen_for_new_blocks)
+
+    flask_thread.start()
+    block_listener_thread.start()
     
-    # Subscribe to new block headers
-    chain_a_block_filter = chain_a_web3.eth.filter('latest')
-    # start API
-    CORS(app)
-    app.run(host='0.0.0.0', port=5000)
-    print("Listening for new blocks...")
-    while True:
-        for block_hash in chain_a_block_filter.get_new_entries():
-            block = chain_a_web3.eth.get_block(block_hash)
-            # TODO: SPVM blocks happen on even L1 block numbers, validity conditions are posted on odd L1 block numbers.
-            handle_new_block(block, chain_a_election_contract, chain_a_web3)
+    flask_thread.join()
+    block_listener_thread.join()
+    # # Subscribe to new block headers
+    # chain_a_block_filter = chain_a_web3.eth.filter('latest')
+    # # start API
+    # CORS(app)
+    # app.run(host='0.0.0.0', port=5001)
+    # print("Listening for new blocks...")
+    # while True:
+    #     for block_hash in chain_a_block_filter.get_new_entries():
+    #         block = chain_a_web3.eth.get_block(block_hash)
+    #         # TODO: SPVM blocks happen on even L1 block numbers, validity conditions are posted on odd L1 block numbers.
+    #         handle_new_block(block, chain_a_election_contract, chain_a_web3)
 
 
 if __name__ == "__main__":
