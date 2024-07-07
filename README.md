@@ -6,24 +6,7 @@ This software is provided as a proof of concept and is not intended for producti
 
 The use of this software is at your own risk. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
 
-Spire PoC Monorepo!
-
-[Poc Spec](https://www.notion.so/spirelabs/Spire-Based-Stack-PoC-45ecd6a1afa44f8c8f28f086b42b08c5)
-
-[General PoC](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737)
-
-TODO:
-
-- [x] finish creating a shared docker-compose.yml for all rust executables in monorepo (they live in the apps directory)
-- [x] set up github actions for PRs and pushes to main
-- [x] add .dockerignore files to apps to speed up build process
-- [x] test out functionality with hosted Anvil instance
-- [x] add Spire wallet/poc-infra/smart contracts to monorepo (useful commands for this include `rm -rf .git` inside the folder for the app added, then `git rm --cached path/to/app` from parent folder, followed by `git add path/to/app`)
-- [x] make sure the apps are up to date with the latest in all individual repos, announce to the team that we now build in the monorepo only
-- [ ] bring env vars out of individual apps into one consolidated file?
-- [ ] write additional scripts (makefile?) to spin up all apps in monorepo
-- [ ] add setup instructions in READMEs all apps for development purposes
-- [ ] add TODOs in all READMEs for getting the monorepo ready for release
+Spire PoC Monorepo
 
 Note: Having a working docker installation is required.
 
