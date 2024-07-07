@@ -20,6 +20,8 @@ There is also a set of smart contracts used to determine the election of propose
 - packages/spvm-1/lib/election-contract: Handles election of Proposers and Enforcers.
 - packages/spvm-1/lib/preconfirmations-slashing: This contract is used to slash enforces that misbehave.
 
+The goal of this PoC is to showcase some basic functionality of Spire, including cross-chain transfers with fast preconfirmations, and appchain composibility with cross-chain swaps.
+
 Note: Having a working docker installation is required.
 
 # Demo Setup
@@ -136,10 +138,6 @@ If you see `failed to solve: error from sender: open /poc-monorepo/apps/gateway-
 ```shell
 sudo chmod -R 777 apps/gateway-api/postgres
 ```
-
-# Addresses Used
-
-Here is the list of [addresses](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737?pvs=4#d327fa44da264312ad8ac3bebae25c4a) used in the PoC, along with their private keys (may want to remove this when making this repo public, and add instructions for people to setup their own anvil node and generate their own wallets).
 
 # Testing
 
