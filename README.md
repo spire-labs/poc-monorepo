@@ -6,7 +6,16 @@ This software is provided as a proof of concept and is not intended for producti
 
 The use of this software is at your own risk. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
 
-Spire PoC Monorepo
+Welcome to the Spire PoC Monorepo
+
+This monorepo shows prototypes of some of the building blocks of Spire's based appchain framework. It consists of the following components:
+
+- apps/wallet: A simple web wallet used for submitting transactions from appchains, and displaying appchain balances
+- apps/gateway-api: This gateway receives transactions from users, converts them into preconfirmation requests, and routes them to elected enforcers
+- apps/enforcer: This service is responsible for posting transaction validity conditions to L1 contracts
+- apps/proposer: This service builds blocks that satisfy the Validity Conditions sent by the Enforcer.
+
+There is also a set of smart contracts used to determine the election of proposers and enforcers.
 
 Note: Having a working docker installation is required.
 
