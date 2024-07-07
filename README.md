@@ -15,7 +15,10 @@ This monorepo shows prototypes of some of the building blocks of Spire's based a
 - apps/enforcer: This service is responsible for posting transaction validity conditions to L1 contracts
 - apps/proposer: This service builds blocks that satisfy the Validity Conditions sent by the Enforcer.
 
-There is also a set of smart contracts used to determine the election of proposers and enforcers.
+There is also a set of smart contracts used to determine the election of proposers and enforcers. These can be found under `packages`:
+- packages/spvm-1/src/spvm-1: This is a small state transition machine capable of being executed in the EVM. It is used only in the PoC.
+- packages/spvm-1/lib/election-contract: Handles election of Proposers and Enforcers.
+- packages/spvm-1/lib/preconfirmations-slashing: This contract is used to slash enforces that misbehave.
 
 Note: Having a working docker installation is required.
 
