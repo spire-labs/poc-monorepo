@@ -8,6 +8,8 @@ import venv
 import json
 from pathlib import Path
 
+from flask_cors import CORS
+
 app = Flask(__name__)
 
 # Variables to hold contract addresses. Retrievable via Flask API
@@ -155,9 +157,9 @@ def initialize_proposers(election_contract, proposer_a_address, proposer_b_addre
     for i in range(0, tickets_to_mint):
         try:
             tx_hash_a = election_contract.functions.mintTicket(proposer_a_address).transact({'from': web3.eth.accounts[0]})
-            receipt_a = web3.eth.wait_for_transaction_receipt(tx_hash_a)
+            # receipt_a = web3.eth.wait_for_transaction_receipt(tx_hash_a)
             tx_hash_b = election_contract.functions.mintTicket(proposer_b_address).transact({'from': web3.eth.accounts[0]})
-            receipt_b = web3.eth.wait_for_transaction_receipt(tx_hash_b)
+            # receipt_b = web3.eth.wait_for_transaction_receipt(tx_hash_b)
         except Exception as e:
             print(f"Error distributing election tickets to proposers {e}")
     
@@ -237,7 +239,7 @@ def handle_new_block(block, election_contract, web3):
 
 def start_anvil(port):
     print(f"Starting Anvil on port {port}...")
-    anvil_command = f"nohup anvil --host 0.0.0.0 --port {port} > ~/anvil_logs_{port}.log 2>&1 &"
+    anvil_command = f"nohup anvil --block-time 1 --host 0.0.0.0 --port {port} > ~/anvil_logs_{port}.log 2>&1 &"
     anvil_process = subprocess.Popen(anvil_command, shell=True)
     print(f"Anvil started in the background on port {port}. PID: {anvil_process.pid}")
     return anvil_process
@@ -357,7 +359,7 @@ def main():
     print("Building and compiling contracts")
     for repo_name, _ in repos:
         print(f"Building in {repo_name}")
-        run_command(f"cd {base_dir / repo_name} && forge clean && forge update && forge build")
+        run_command(f"cd {base_dir / repo_name}") # && forge clean && forge update && forge build")
 
     
     abi_paths = {
@@ -440,7 +442,7 @@ def main():
     chain_a_election_address = extract_deployed_address(chain_a_election_deploy_output)
 
     if chain_a_election_address:
-        print(f"Deployed election contract address: {chain_a_election_address}")
+        print(f"Deployed chain A election contract address: {chain_a_election_address}")
     else:
         raise "error deploying election contract"
     
@@ -454,7 +456,7 @@ def main():
     chain_b_election_address = extract_deployed_address(chain_b_election_deploy_output)
 
     if chain_b_election_address:
-        print(f"Deployed election contract address: {chain_b_election_address}")
+        print(f"Deployed chain B election contract address: {chain_b_election_address}")
     else:
         raise "error deploying election contract"
     
@@ -520,28 +522,29 @@ def main():
     # - INFINITY on appchain A
     # - SUNSET on appchain B
 
-    def run_flask_app():
-        CORS(app)
-        app.run(host='0.0.0.0', port=5001)
+    # def run_flask_app():
+    #     CORS(app)
+    #     app.run(host='0.0.0.0', port=5001)
 
-    def listen_for_new_blocks():
-        chain_a_block_filter = chain_a_web3.eth.filter('latest')
-        print("Listening for new blocks...")
-        while True:
-            for block_hash in chain_a_block_filter.get_new_entries():
-                block = chain_a_web3.eth.get_block(block_hash)
-                handle_new_block(block, chain_a_election_contract, chain_a_web3)
+    # def listen_for_new_blocks():
+    #     chain_a_block_filter = chain_a_web3.eth.filter('latest')
+    #     print("Listening for new blocks...")
+    #     while True:
+    #         for block_hash in chain_a_block_filter.get_new_entries():
+    #             block = chain_a_web3.eth.get_block(block_hash)
+    #             handle_new_block(block, chain_a_election_contract, chain_a_web3)
 
-    flask_thread = threading.Thread(target=run_flask_app)
-    block_listener_thread = threading.Thread(target=listen_for_new_blocks)
+    # flask_thread = threading.Thread(target=run_flask_app)
+    # block_listener_thread = threading.Thread(target=listen_for_new_blocks)
 
-    flask_thread.start()
-    block_listener_thread.start()
+    # flask_thread.start()
+    # block_listener_thread.start()
     
-    flask_thread.join()
-    block_listener_thread.join()
+    # flask_thread.join()
+    # block_listener_thread.join()
 
 
 if __name__ == "__main__":
     main()
-    # app.run(host='0.0.0.0', port=5000)
+    CORS(app)
+    app.run(host='0.0.0.0', port=5000)

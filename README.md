@@ -174,6 +174,19 @@ forge build
 forge test
 ```
 
+## Anvil
+
+If you need to setup your own Anvil node,
+
+```shell
+cd scripts
+./setup_and_run.sh
+```
+
+Do note this script will create a few folders in your home directory. Also note that if you are on a Mac, you will need to run `./setup_and_run_mac.sh` instead.
+
+If you run into some issues regarding `forge update` and `git submodule` not working well together, you may need to manually `rm -rf` the affected repos and manually `forge build` them.
+
 ### Commands that may be helpful (disorganised)
 
 ```

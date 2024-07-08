@@ -4,7 +4,8 @@
 # Note, assumes forge and anvil are already installed on VM
 
 # NOTE: THIS FILE IS ARCHIVED AND IS NO LONGER IN USE. USE setup_and_run.sh instead
-
+echo "This script is no longer in use. Use setup_and_run.sh instead. Exiting..."
+exit 1
 
 # clone repos if they do not exist
 if [ ! -d "$HOME/spire-poc/repos" ]; then
