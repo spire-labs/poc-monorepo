@@ -11,6 +11,7 @@ tokio = { version = "1.0", features = ["full"] }
 dotenvy = "0.15.7"
 ethers-core = "2.0.14"
 alloy-sol-types = "0.7.6"
+serde_json = "1.0.120"
 
 [[bin]]
 name = "get_balance"
@@ -31,3 +32,11 @@ path = "src/read_revert.rs"
 [[bin]]
 name = "create_accounts"
 path = "src/create_accounts.rs"
+
+[[bin]]
+name = "new_block"
+path = "src/new_block.rs"
+
+[[bin]]
+name = "find_creation"
+path = "src/find_creation.rs"
