@@ -1,13 +1,14 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use axum_macros::debug_handler;
 use dotenv::dotenv;
+use entity::nonces;
 use ethers::{
     core::abi::{encode, Token},
     core::utils::keccak256,
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, Signature, TxHash, U256},
 };
-use sea_orm::Database;
+use sea_orm::{Database, DatabaseConnection, DbBackend, EntityTrait, QueryFilter, Statement};
 use serde::{Deserialize, Serialize};
 use spvm_rs::{decode_tx_content, encode_tx_content, Transaction};
 use std::env;
@@ -37,6 +38,7 @@ pub struct PrivilegedTransaction {
     pub tx_hash: Bytes,
     pub tx_content: Bytes,
     pub signature: Bytes,
+    pub preconfer_contract: Address,
 }
 
 pub fn encode_preconf_payload(payload: &PreconfirmationPayload) -> Bytes {
@@ -73,6 +75,7 @@ pub async fn request_preconfirmation(
 
     let db = state.db;
 
+    println!("payload: {:?}", payload);
     // checks the tx is valid, makes state changes
     let transaction_result = payload.transaction.execute_transaction(&db).await;
 
@@ -130,8 +133,14 @@ pub async fn request_preconfirmation(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
 
-	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.transaction.clone());
-	validity_txs.entry(payload.preconfer_contract).or_insert_with(Vec::new).push(payload.tip_tx.clone());
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(payload.transaction.clone());
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(payload.tip_tx.clone());
 
     let block_number = {
         let mut block_num = state.block_num.lock().unwrap();
@@ -197,7 +206,10 @@ pub async fn metadata(Json(payload): Json<MetadatPayload>) -> impl IntoResponse 
 
 // Used by the setup script to affect state. The transaction must still be valid.
 // DOES NOT return preconfirmations or post to Contract
-pub async fn apply_tx(Json(payload): Json<PrivilegedTransaction>) -> StatusCode {
+pub async fn apply_tx(
+    State(state): State<AppState>,
+    Json(payload): Json<PrivilegedTransaction>,
+) -> StatusCode {
     let db_path = match env::var("DB") {
         Ok(path) => path,
         Err(e) => {
@@ -232,6 +244,17 @@ pub async fn apply_tx(Json(payload): Json<PrivilegedTransaction>) -> StatusCode 
     };
 
     let transaction_result = tx.execute_transaction(&db).await;
+
+    let validity_txs = &state.validity_txs;
+    let mut validity_txs = validity_txs
+        .lock()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+        .unwrap();
+
+    validity_txs
+        .entry(payload.preconfer_contract)
+        .or_insert_with(Vec::new)
+        .push(tx);
 
     if let Err(e) = transaction_result {
         error!("Transaction execution failed: {}", e);

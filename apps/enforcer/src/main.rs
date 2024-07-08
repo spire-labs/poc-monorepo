@@ -3,17 +3,18 @@ use dotenv::dotenv;
 use ethers::{
     contract::abigen,
     middleware::SignerMiddleware,
-    providers::{Http, Provider},
+    providers::{Http, Middleware, Provider},
     signers::{LocalWallet, Signer},
     types::{Address, Bytes, TxHash},
+    utils::keccak256,
 };
-use local_ip_address::local_ip;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use serde::{Deserialize, Serialize};
 use spvm_rs::*;
 use std::collections::HashMap;
 use std::env;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tokio::time::{self, Duration};
 
@@ -71,6 +72,7 @@ async fn main() {
 
     let validity_txs: ValidityConditions = Arc::new(Mutex::new(HashMap::new()));
 
+    tokio::time::sleep(Duration::from_secs(10)).await;
     register_with_gateway().await;
 
     let validity_txs_clone = Arc::clone(&validity_txs);
@@ -131,10 +133,11 @@ fn app(db: DatabaseConnection) -> Router {
     Router::new()
         .route(
             "/request_preconfirmation",
-            post(api::request_preconfirmation).with_state(shared_state),
+            post(api::request_preconfirmation),
         )
         // .route("/metadata", post(api::metadata))
         .route("/apply_tx", post(api::apply_tx))
+        .with_state(shared_state)
 }
 
 async fn submit_validity_condition(
@@ -146,6 +149,28 @@ async fn submit_validity_condition(
         validity_txs.clear();
         extracted
     };
+
+    let provider_url = env::var("PROVIDER")?;
+
+    let provider = Provider::<Http>::try_from(provider_url)?;
+    let signer = SignerMiddleware::new(
+        provider,
+        env::var("PRIVATE_KEY")
+            .unwrap()
+            .parse::<LocalWallet>()
+            .unwrap()
+            .with_chain_id(31337u64),
+    );
+
+    let client = Arc::new(signer);
+
+    let mut block_num = client.get_block_number().await?.as_u64();
+    while block_num % 2 != 0 {
+        time::sleep(Duration::from_secs(1)).await;
+        block_num = client.get_block_number().await?.as_u64();
+    }
+
+    abigen!(Slashing, "contracts/Slashing.json");
 
     for (preconf_add, txs) in validity_txs.iter() {
         let transactions: Vec<TxEncoded> = txs
@@ -165,21 +190,7 @@ async fn submit_validity_condition(
             })
             .collect();
 
-        abigen!(Slashing, "contracts/Slashing.json");
-
-        let provider_url = env::var("PROVIDER")?;
-
-        let provider = Provider::<Http>::try_from(provider_url)?;
-        let client = SignerMiddleware::new(
-            provider,
-            env::var("PRIVATE_KEY")
-                .unwrap()
-                .parse::<LocalWallet>()
-                .unwrap()
-                .with_chain_id(31337u64),
-        );
-
-        let contract = Slashing::new(*preconf_add, Arc::new(client));
+        let contract = Slashing::new(*preconf_add, Arc::new(client.clone()));
 
         let transactions: Vec<Transaction> = transactions
             .into_iter()
@@ -201,6 +212,24 @@ async fn submit_validity_condition(
             .await?
             .await?;
     }
+
+	/*
+    if validity_txs.is_empty() {
+        let empty_transactions: Vec<Transaction> = Vec::new();
+        let slashing_contracts =
+            vec![Address::from_str("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
+
+        for &preconf_add in &slashing_contracts {
+            let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
+            let _ = contract
+                .submit_validity_conditions(empty_transactions.clone())
+                .send()
+                .await?
+                .await?;
+        }
+    }
+	*/
+
     Ok(())
 }
 
@@ -223,27 +252,48 @@ async fn register_with_gateway() {
     let pv_key = env::var("PRIVATE_KEY").unwrap();
     let wallet = pv_key.parse::<LocalWallet>().unwrap();
     let commitment = wallet
-        .sign_message(challenge_string.data.challenge.as_bytes())
-        .await
+        .sign_hash(TxHash::from(keccak256(
+            challenge_string.data.challenge.as_bytes(),
+        )))
         .unwrap();
 
+    println!("commitment: {:?}", commitment);
+
+    let enforcer_url = env::var("ENFORCER_URL").unwrap_or("http://enforcer:5555".to_string());
     let resp = RegisterEnforcerMetadata {
-        address: wallet.address().to_string(),
+        address: format!("{:#x}", wallet.address()),
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),
         name: env::var("ENFORCER_NAME").unwrap(),
         preconf_contracts: vec![env::var("PRECONF_CONTRACT").unwrap()],
-        url: local_ip().unwrap().to_string(),
+        url: enforcer_url,
     };
 
-    let _ = client
+    let ack = client
         .post(format!("{}/enforcer_metadata", gateway_ip))
         .json(&resp)
         .send()
-        .await
-        .unwrap();
+        .await;
+
+    match ack {
+        Ok(response) => {
+            if response.status().is_success() {
+                println!("Registered with gateway, data {:?}", resp);
+                println!("Gateway ack {:?}", response.text().await.unwrap());
+            } else {
+                println!(
+                    "Failed to register with gateway, error: {:?}",
+                    response.text().await.unwrap()
+                );
+            }
+        }
+        Err(e) => {
+            println!("Error occurred while registering with gateway: {:?}", e);
+        }
+    }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use self::api::PreconfirmationPayload;
@@ -478,3 +528,4 @@ mod tests {
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 }
+*/

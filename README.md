@@ -106,6 +106,7 @@ forge build
 ```
 
 ## Special instructions for running scripts
+
 The scripts in /scripts can be used to spin up an Anvil node and populate it with contracts. There are two in particular:
 
 `scripts/setup_and_run.sh`
@@ -116,14 +117,14 @@ Note that this script used to be responsible for spinning up Rust repos as well 
 `demo_setup_script.py`
 This will spin up an anvil node, deploy an ERC20 contract, and deploy the Spire contracts.
 
-
 ## running scripts locally on a mac instructions
-To get things up and running quickly on a local mac, some one-time steps are done manually to simplify the script.  use the following instructions, starting in the root of the monorepo project.
+
+To get things up and running quickly on a local mac, some one-time steps are done manually to simplify the script. use the following instructions, starting in the root of the monorepo project.
 
 - Install forge/foundry if not already done
--- curl -L https://foundry.paradigm.xyz | bash
--- source ~/.bashrc
--- foundryup
+  -- curl -L https://foundry.paradigm.xyz | bash
+  -- source ~/.bashrc
+  -- foundryup
 - from the root of the monorepo project, run `forge install OpenZeppelin/openzeppelin-contracts`
 - run `forge build` to compile the ERC20 contract used in Demo 3
 - Ensure that you have your github ssh credentials set up locally. then `cd scripts` and then run `./setup_and_run_mac.sh`. This should pull down all of the smart contract repos, compile, and run anvil
@@ -171,4 +172,13 @@ You must have `forge` [installed](https://book.getfoundry.sh/getting-started/ins
 cd apps/spvm-1
 forge build
 forge test
+```
+
+### Commands that may be helpful (disorganised)
+
+```
+insert into initialized_tickers (ticker, is_initialized) values ('RAIN', true);
+insert into state (ticker, owner_address, amount) values ('RAIN', '0xa0ee7a142d267c1f36714e4a8f75612f20a79720', 100);
+insert into initialized_tickers (ticker, is_initialized) values ('QUEEN', true);
+insert into state (ticker, owner_address, amount) values ('QUEEN', '0xa0ee7a142d267c1f36714e4a8f75612f20a79720', 200);
 ```

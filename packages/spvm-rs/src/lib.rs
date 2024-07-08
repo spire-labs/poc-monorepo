@@ -78,6 +78,7 @@ impl TransactionContent {
             }
             TransactionParams::Transfer(params) => {
                 let sender_balance = Self::get_balance(&params.token_ticker, self.from, db).await?;
+                println!("Sender balance: {:?}", sender_balance);
                 let receiver_balance =
                     Self::get_balance(&params.token_ticker, params.to, db).await?;
                 Self::set_balance(
@@ -166,23 +167,26 @@ impl TransactionContent {
                     .one(db)
                     .await?;
 
+                println!("Token ticker {:?}", params.token_ticker);
                 match initialized {
                     Some(record) => {
                         if !record.is_initialized {
-                            return Err("Token not initialized".into());
+                            return Err("Token not initialized (Some)".into());
                         }
                     }
-                    None => return Err("Token not initialized".into()),
+                    None => return Err("Token not initialized (None)".into()),
                 }
 
                 let balance = state::Entity::find()
                     .filter(state::Column::Ticker.eq(&params.token_ticker))
-                    .filter(state::Column::OwnerAddress.eq(self.from.to_string()))
+                    .filter(state::Column::OwnerAddress.eq(format!("{:#x}", self.from)))
                     .one(db)
                     .await?;
 
+                println!("Params amount {:?}", params.amount);
                 match balance {
                     Some(record) => {
+                        println!("Record amount {:?}", record.amount);
                         if record.amount < params.amount as i32 {
                             return Err("Insufficient balance".into());
                         }
