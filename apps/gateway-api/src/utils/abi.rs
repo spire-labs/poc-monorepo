@@ -5,7 +5,7 @@ use ethers::{
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use spvm_rs::*;
-use std::error::Error;
+use std::{env, error::Error};
 
 use super::types::PreconfirmationPayload;
 
@@ -53,9 +53,11 @@ pub struct ContractData {
 
 // helper function which pulls contract information (addresses, abis) from Anvil blockchains
 pub async fn fetch_contract_data() -> Result<ContractData, reqwest::Error> {
+    dotenvy::dotenv().ok();
+    let rpc_url = env::var("RPC_URL").expect("RPC_URL must be set");
     let client = Client::new();
     let response = client
-        .get("http://34.30.119.68:5000/contracts")
+        .get(&format!("{}/contracts", rpc_url))
         .send()
         .await?
         .json::<ContractData>()
