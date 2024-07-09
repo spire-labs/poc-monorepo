@@ -57,10 +57,10 @@ contract ElectionContract is ElectionInterface {
     function getWinnerTokenId(
         uint block_number
     ) internal view returns (uint256) {
-        require(
-            block_number > (block.number > 292 ? block.number - 292 : 0),
-            "Cannot query blocks older than 292 blocks (election)"
-        );
+        // require(
+        //     block_number > (block.number > 292 ? block.number - 292 : 0),
+        //     "Cannot query blocks older than 292 blocks (election)"
+        // );
 
         GenericTicket ticket = GenericTicket(ticket_address);
 

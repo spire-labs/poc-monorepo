@@ -54,10 +54,10 @@ pub struct ContractData {
 // helper function which pulls contract information (addresses, abis) from Anvil blockchains
 pub async fn fetch_contract_data() -> Result<ContractData, reqwest::Error> {
     dotenvy::dotenv().ok();
-    let rpc_url = env::var("RPC_URL").expect("RPC_URL must be set");
+    let flask_url = env::var("FLASK_URL").expect("FLASK_URL must be set");
     let client = Client::new();
     let response = client
-        .get(&format!("{}/contracts", rpc_url))
+        .get(&format!("{}/contracts", flask_url))
         .send()
         .await?
         .json::<ContractData>()
