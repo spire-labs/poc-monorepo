@@ -109,7 +109,7 @@ async fn main() {
             for tx in &a_txs {
                 tx.execute_transaction(&guard.db).await.unwrap();
                 // check for certain tx to sponsor
-                let pv_key = env::var("PRIVATE_KEY").unwrap();
+                let pv_key = env::var("PROPOSER_PRIVATE_KEY").unwrap();
                 let wallet = LocalWallet::from_str(&pv_key)
                     .unwrap()
                     .with_chain_id(31337u64);
@@ -238,9 +238,9 @@ async fn get_nonce_on_appchain(appchain_a: bool) -> Result<u32, Box<dyn std::err
     let client = Arc::new(provider);
 
     let spvm = if appchain_a {
-        env::var("SPVM_ADDRESS_A")?
+        env::var("CHAIN_A_SPVM_CONTRACT_ADRESS")?
     } else {
-        env::var("SPVM_ADDRESS_B")?
+        env::var("CHAIN_B_SPVM_CONTRACT_ADRESS")?
     };
 
     let spvm_address = spvm.parse::<Address>()?;
@@ -249,7 +249,7 @@ async fn get_nonce_on_appchain(appchain_a: bool) -> Result<u32, Box<dyn std::err
 
     let spvm = Spvm::new(spvm_address, client.clone());
 
-    let pv_key = env::var("PRIVATE_KEY")?;
+    let pv_key = env::var("PROPOSER_PRIVATE_KEY")?;
     let wallet = LocalWallet::from_str(&pv_key)?.with_chain_id(31337u64);
 
     let nonce = spvm.nonces(wallet.address()).call().await?;
@@ -291,9 +291,9 @@ async fn get_validity_conditions(
     let client = Arc::new(provider);
 
     let slashing_address: String = if appchain_a {
-        env::var("SLASHING_ADDRESS_A")?
+        env::var("CHAIN_A_SLASHING_CONTRACT_ADDRESS")?
     } else {
-        env::var("SLASHING_ADDRESS_B")?
+        env::var("CHAIN_B_SLASHING_CONTRACT_ADDRESS")?
     };
 
     let slashing_address = slashing_address.parse::<Address>()?;
@@ -344,7 +344,7 @@ async fn propose_block(
 ) -> Result<[u8; 32], Box<dyn std::error::Error>> {
     let tx_hash = keccak256(&tx_encoded);
 
-    let pv_key = env::var("PRIVATE_KEY")?;
+    let pv_key = env::var("PROPOSER_PRIVATE_KEY")?;
     let wallet = LocalWallet::from_str(&pv_key)?.with_chain_id(31337u64);
 
     let proposer_address = wallet.address();
@@ -357,9 +357,9 @@ async fn propose_block(
     let client = Arc::new(signer);
 
     let spvm = if appchain_a {
-        env::var("SPVM_ADDRESS_A")?
+        env::var("CHAIN_A_SPVM_CONTRACT_ADRESS")?
     } else {
-        env::var("SPVM_ADDRESS_B")?
+        env::var("CHAIN_B_SPVM_CONTRACT_ADRESS")?
     };
 
     let spvm_address = spvm.parse::<Address>()?;

@@ -140,7 +140,7 @@ pub async fn request_preconfirmation(
     // determine the amount to tip
     let tip = price_inclusion_preconfirmation(&tx_content, data.tx_hash.to_string()).await;
 
-    let pv_key = match env::var("PRIVATE_KEY") {
+    let pv_key = match env::var("GATEWAY_API_PRIVATE_KEY") {
         Ok(key) => key,
         Err(e) => {
             println!("Error getting private key: {:?}", e);
@@ -363,6 +363,8 @@ pub async fn get_wallet_balance(
     let mut rollup_contract_address = Default::default();
     let mut rollup_contract_abi = Default::default();
 
+    println!("Params.rollup_contract: {:?}", params.rollup_contract);
+    println!("Contract A Address: {:?}", contract_a.address);
     if params.rollup_contract == contract_a.address {
         rollup_contract_address = contract_a.address;
         rollup_contract_abi = contract_a.abi;

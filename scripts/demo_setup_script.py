@@ -472,7 +472,7 @@ def main():
     chain_a_slashing_address = extract_deployed_address(chain_a_slashing_deploy_output)
 
     if chain_a_slashing_address:
-        print(f"Deployed slashing contract address: {chain_a_slashing_address}")
+        print(f"Chain A: Deployed slashing contract address: {chain_a_slashing_address}")
     else:
         raise "error deploying slashing contract"
 
@@ -482,7 +482,7 @@ def main():
     chain_b_slashing_address = extract_deployed_address(chain_b_slashing_deploy_output)
 
     if chain_b_slashing_address:
-        print(f"Deployed slashing contract address: {chain_b_slashing_address}")
+        print(f"Chain B: Deployed slashing contract address: {chain_b_slashing_address}")
     else:
         raise "error deploying slashing contract"
 

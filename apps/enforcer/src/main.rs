@@ -155,7 +155,7 @@ async fn submit_validity_condition(
     let provider = Provider::<Http>::try_from(provider_url)?;
     let signer = SignerMiddleware::new(
         provider,
-        env::var("PRIVATE_KEY")
+        env::var("ENFORCER_PRIVATE_KEY")
             .unwrap()
             .parse::<LocalWallet>()
             .unwrap()
@@ -213,7 +213,7 @@ async fn submit_validity_condition(
             .await?;
     }
 
-	/*
+    /*
     if validity_txs.is_empty() {
         let empty_transactions: Vec<Transaction> = Vec::new();
         let slashing_contracts =
@@ -228,7 +228,7 @@ async fn submit_validity_condition(
                 .await?;
         }
     }
-	*/
+    */
 
     Ok(())
 }
@@ -249,7 +249,7 @@ async fn register_with_gateway() {
 
     println!("challenge_string: {:?}", challenge_string);
 
-    let pv_key = env::var("PRIVATE_KEY").unwrap();
+    let pv_key = env::var("ENFORCER_PRIVATE_KEY").unwrap();
     let wallet = pv_key.parse::<LocalWallet>().unwrap();
     let commitment = wallet
         .sign_hash(TxHash::from(keccak256(
@@ -265,7 +265,7 @@ async fn register_with_gateway() {
         challenge_string: challenge_string.data.challenge,
         signature: commitment.to_string(),
         name: env::var("ENFORCER_NAME").unwrap(),
-        preconf_contracts: vec![env::var("PRECONF_CONTRACT").unwrap()],
+        preconf_contracts: vec![env::var("PRECONF_CONTRACT_ADDRESS").unwrap()],
         url: enforcer_url,
     };
 
