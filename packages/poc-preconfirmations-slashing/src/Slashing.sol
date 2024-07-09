@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./PreconfirmationsTypes.sol";
-import "election-contract/ElectionContract.sol";
+import "../poc-election-contract/ElectionContract.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 contract Slashing {

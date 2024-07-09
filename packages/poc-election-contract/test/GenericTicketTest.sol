@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import "lib/forge-std/src/Test.sol";
 
-import "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-import "../src/GenericTicket.sol";
+import "src/GenericTicket.sol";
 
 contract GenericTicketTest is Test, ERC721Holder {
     function testCreation() public {

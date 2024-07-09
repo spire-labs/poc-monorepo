@@ -57,10 +57,10 @@ contract ElectionContract is ElectionInterface {
     function getWinnerTokenId(
         uint block_number
     ) internal view returns (uint256) {
-        // require(
-        //     block_number > (block.number < 292 ? 0 : block.number - 292),
-        //     "Cannot query blocks older than 292 blocks"
-        // );
+        require(
+            block_number > block.number - 292,
+            "Cannot query blocks older than 292 blocks (election)"
+        );
 
         GenericTicket ticket = GenericTicket(ticket_address);
 
@@ -72,9 +72,7 @@ contract ElectionContract is ElectionInterface {
         );
 
         // get the historical block hash at the seed block for the given block number
-        uint historical_block_hash = uint(
-            blockhash(block_number < 64 ? 0 : block_number - 64)
-        );
+        uint historical_block_hash = uint(blockhash(block_number - 64));
 
         uint winner_token_id = historical_block_hash % historical_supply;
 

@@ -1,3 +1,6 @@
+from web3 import Web3
+from flask_cors import CORS
+
 from flask import Flask, jsonify
 import os
 import threading
@@ -330,18 +333,16 @@ def get_wallet_balance():
 
 def main():
     global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi, l1_erc_20_address
-    home = Path.home()
     # base_dir = home / "spire-poc/repos"
     # for running locally, just use home
-    base_dir = home
+    # base_dir is current directory of script
+    base_dir = Path(__file__).resolve().parent
+    # cd .. until we are in the parent directory of poc-monorepo
+    while not Path.joinpath(base_dir, "poc-monorepo").exists():
+        base_dir = base_dir.parent
 
-    # from flask import Flask, jsonify
-    from web3 import Web3
-    from flask_cors import CORS
-
-    
-    # Ensure base directory exists
-    base_dir.mkdir(parents=True, exist_ok=True)
+    # cd into poc-monorepo/packages
+    base_dir = Path.joinpath(base_dir, "poc-monorepo", "packages")
     
     # Repositories information
     repos = [
@@ -352,14 +353,14 @@ def main():
 
     # Clone or pull repositories
     # TODO: is it beter to rm -rf and rebuild repos dirs each time?
-    for repo_name, repo_url in repos:
-        clone_or_pull_repo(base_dir / repo_name, repo_url)
+    # for repo_name, repo_url in repos:
+    #     clone_or_pull_repo(base_dir / repo_name, repo_url)
 
     # Build contracts in each repo
     print("Building and compiling contracts")
     for repo_name, _ in repos:
         print(f"Building in {repo_name}")
-        run_command(f"cd {base_dir / repo_name}") # && forge clean && forge update && forge build")
+        run_command(f"cd {base_dir / repo_name} && forge clean && forge update && forge build")
 
     
     abi_paths = {

@@ -1,5 +1,27 @@
 # poc-monorepo
 
+## Direcotry Structure
+
+All paths are relative to the root of the repository.
+
+- `apps` contains all components (enforcer, gateway-api, proposer, wallet). For example,
+  - `apps/proposer` has everything you need to run a proposer
+  - `apps/proposer/src` contains the Rust code
+  - `apps/proposer/contract` contains _compiled_ contracts (`.json`) required by the Rust code
+  - `apps/proposer/docker-compose.yml` is the standalone docker-compose file you can use to spin up the proposer in Docker engine. Alternative you can run it locally with `cargo run` from within `apps/proposer` directory.
+- `apps/wallet` contains a React app that acts as a wallet from the end user's perspective.
+- `packages` contains things that will be changed less frequently, including all the smart contracts. For example,
+  - `packages/poc-election-contract` contains everything you need to compile the election contract
+  - `packages/poc-election-contract/src` contains the Solidity code
+  - `packages/poc-election-contract/lib` contains all `forge` dependencies required to compile the contract
+  - `packages/poc-election-contract/test` contains unit tests for the contract
+  - `packages/poc-election-contract/out` contains the compiled contract (`.json`), which we will need to copy over to `apps/proposer/contract` whenever we make changes to the contract.
+- `packages/spvm-rs` contains the Rust version of the Spire Virtual Machine, which is used by the enforcer to validate the execution of preconfirmation transactions it receives, before the enorcer submits them (validity conditions) to the slashing contract.
+- `scripts` contains all the scripts required to setup the local Anvil environment, deploying contracts to local Anvil, Flask server (for contract addresses), utils, etc.
+  - `scripts/demo_setup_script.py` is the main script that sets up the local Anvil environment, deploys contracts, and populates them with initial data.
+  - `scripts/setup_and_run.sh` is the script that installs all dependencies for the projects, spins up a Python virtual env, and then executes `demo_setup_script.py`. If you have a Mac, you can use `setup_and_run_mac.sh` instead.
+  - `scripts/utils` contains useful scripts you can call from the command line, written in Rust. It is it's own Cargo project, so you can run `cargo run --bin script_name` from within `scripts/utils` to run the utility functions. See `scripts/utils/Cargo.toml` for all available utility script names.
+
 Spire PoC Monorepo!
 
 [Poc Spec](https://www.notion.so/spirelabs/Spire-Based-Stack-PoC-45ecd6a1afa44f8c8f28f086b42b08c5)
