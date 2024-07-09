@@ -122,7 +122,7 @@ cargo run
 ## spvm-1
 
 ```shell
-git submodule update
+git submodule update --init
 cd apps/spvm-1
 forge build
 ```
