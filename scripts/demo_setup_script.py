@@ -345,11 +345,7 @@ def main():
     base_dir = Path.joinpath(base_dir, "poc-monorepo", "packages")
     
     # Repositories information
-    repos = [
-        ("spvm-1", "git@github.com:spire-labs/spvm-1.git"),
-        ("poc-preconfirmations-slashing", "git@github.com:spire-labs/poc-preconfirmations-slashing.git"),
-        ("poc-election-contract", "git@github.com:spire-labs/poc-election-contract.git"),
-    ]
+    repos = [ "spvm-1", "preconfirmations-slashing", "election-contract" ]
 
     # Clone or pull repositories
     # TODO: is it beter to rm -rf and rebuild repos dirs each time?
@@ -358,15 +354,15 @@ def main():
 
     # Build contracts in each repo
     print("Building and compiling contracts")
-    for repo_name, _ in repos:
+    for repo_name in repos:
         print(f"Building in {repo_name}")
         run_command(f"cd {base_dir / repo_name} && forge clean && forge update && forge build")
 
     
     abi_paths = {
         "spvm": "/spvm-1/out/spvm-1.sol/SPVM.json",
-        "election": "/poc-election-contract/out/ElectionContract.sol/ElectionContract.json",
-        "slashing": "/poc-preconfirmations-slashing/out/Slashing.sol/Slashing.json"
+        "election": "/election-contract/out/ElectionContract.sol/ElectionContract.json",
+        "slashing": "/preconfirmations-slashing/out/Slashing.sol/Slashing.json"
     }
 
     spvm_contract_abi = load_abi(base_dir, abi_paths["spvm"])
@@ -436,7 +432,7 @@ def main():
     # TODO: Set this to something realistic
     test_minter_address = chain_a_web3.eth.accounts[0]#"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 
-    election_repo_path = base_dir / "poc-election-contract"
+    election_repo_path = base_dir / "election-contract"
 
     chain_a_election_deploy_output = run_command(f"cd {election_repo_path} && forge create src/ElectionContract.sol:ElectionContract --constructor-args {test_minter_address} --rpc-url http://localhost:{CHAIN_A_PORT} --unlocked --from {DEFAULT_ANVIL_UNLOCKED_ADDRESS}")
     
@@ -467,7 +463,7 @@ def main():
 
 
     # deploy slashing contract
-    slashing_repo_path = base_dir / "poc-preconfirmations-slashing"
+    slashing_repo_path = base_dir / "preconfirmations-slashing"
 
     test_enforcer_address = ENFORCER_ADDRESS
 

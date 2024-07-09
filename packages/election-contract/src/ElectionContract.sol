@@ -58,7 +58,7 @@ contract ElectionContract is ElectionInterface {
         uint block_number
     ) internal view returns (uint256) {
         require(
-            block_number > block.number - 292,
+            block_number > (block.number > 292 ? block.number - 292 : 0),
             "Cannot query blocks older than 292 blocks (election)"
         );
 
@@ -72,7 +72,9 @@ contract ElectionContract is ElectionInterface {
         );
 
         // get the historical block hash at the seed block for the given block number
-        uint historical_block_hash = uint(blockhash(block_number - 64));
+        uint historical_block_hash = uint(
+            blockhash(block_number > 64 ? block_number - 64 : 0)
+        );
 
         uint winner_token_id = historical_block_hash % historical_supply;
 
