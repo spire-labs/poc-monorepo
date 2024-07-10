@@ -49,7 +49,7 @@ interface TokenChainPair {
 }
 
 export async function fetchContracts(): Promise<{ chainA: string; chainB: string }> {
-  const response = await fetch(`${process.env.REACT_APP_RPC_URL}/contracts`);
+  const response = await fetch(`${process.env.REACT_APP_FLASK_URL}/contracts`);
   if (!response.ok) {
     throw new Error(`Failed to fetch contracts! Status: ${response.status}`);
   }

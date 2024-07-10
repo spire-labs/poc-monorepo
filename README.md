@@ -1,6 +1,6 @@
 # poc-monorepo
 
-## Direcotry Structure
+## Directory Structure
 
 All paths are relative to the root of the repository.
 
@@ -21,6 +21,20 @@ All paths are relative to the root of the repository.
   - `scripts/demo_setup_script.py` is the main script that sets up the local Anvil environment, deploys contracts, and populates them with initial data.
   - `scripts/setup_and_run.sh` is the script that installs all dependencies for the projects, spins up a Python virtual env, and then executes `demo_setup_script.py`. If you have a Mac, you can use `setup_and_run_mac.sh` instead.
   - `scripts/utils` contains useful scripts you can call from the command line, written in Rust. It is it's own Cargo project, so you can run `cargo run --bin script_name` from within `scripts/utils` to run the utility functions. See `scripts/utils/Cargo.toml` for all available utility script names.
+
+## Information
+
+Spire allows DApps (Appchain) to create their own rollups that are interoperable with each other. For every such Appchain, there are 3 contracts that need to be deployed on L1.
+
+1. Preconfirmation Slashing Contract
+2. Election Contract
+3. SPVM Contract (Also called the rollup contract)
+
+For the PoC, the SPVM only supports account balances and transfers. In future, the SPVM will be replaced with a EVM.
+
+For the PoC Demo 1, there are 2 chains A and B.
+
+## Diagrams and TODO
 
 Spire PoC Monorepo!
 

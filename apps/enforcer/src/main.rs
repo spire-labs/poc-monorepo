@@ -1,4 +1,7 @@
-use axum::{routing::post, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use dotenv::dotenv;
 use ethers::{
     contract::abigen,
@@ -137,6 +140,7 @@ fn app(db: DatabaseConnection) -> Router {
         )
         // .route("/metadata", post(api::metadata))
         .route("/apply_tx", post(api::apply_tx))
+        // .route("/apply_tx", get(api::alive))
         .with_state(shared_state)
 }
 
@@ -249,6 +253,7 @@ async fn register_with_gateway() {
 
     println!("challenge_string: {:?}", challenge_string);
 
+    dotenv::dotenv().ok();
     let pv_key = env::var("ENFORCER_PRIVATE_KEY").unwrap();
     let wallet = pv_key.parse::<LocalWallet>().unwrap();
     let commitment = wallet

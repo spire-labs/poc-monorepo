@@ -97,7 +97,7 @@ pub async fn request_preconfirmation(
     }
     drop(tip_tx_result);
 
-    let pv_key = match env::var("PRIVATE_KEY") {
+    let pv_key = match env::var("ENFORCER_PRIVATE_KEY") {
         Ok(key) => key,
         Err(e) => {
             error!("Private key not found {}", e);
@@ -204,6 +204,9 @@ pub async fn metadata(Json(payload): Json<MetadatPayload>) -> impl IntoResponse 
 }
 */
 
+pub async fn alive() -> impl IntoResponse {
+    (StatusCode::OK, "Alive").into_response()
+}
 // Used by the setup script to affect state. The transaction must still be valid.
 // DOES NOT return preconfirmations or post to Contract
 pub async fn apply_tx(
@@ -229,7 +232,8 @@ pub async fn apply_tx(
         }
     };
 
-    let tx_content = match decode_tx_content(&payload.tx_content.to_string()) {
+    println!("tx_hash: {:?}", payload.tx_content);
+    let tx_content = match decode_tx_content(&payload.tx_content) {
         Ok(content) => content,
         Err(e) => {
             println!("Error decoding tx content: {:?}", e);
@@ -237,15 +241,28 @@ pub async fn apply_tx(
         }
     };
 
+    let signature_bytes = payload.signature;
+    println!("signature_bytes: {:?}", signature_bytes);
+    // length
+    println!("signature length: {:?}", signature_bytes.len());
+    let signature_str = signature_bytes
+        .iter()
+        .map(|&i| format!("{:02X}", i))
+        .collect::<Vec<String>>()
+        .join("");
+
+    println!("signature_str: {:?}", signature_str);
     let tx = Transaction {
         tx_hash: TxHash::from_str(&payload.tx_hash.to_string()).unwrap(),
         tx_content,
-        signature: Signature::from_str(&payload.signature.to_string()).unwrap(),
+        signature: Signature::from_str(&signature_str).unwrap(),
     };
 
     let transaction_result = tx.execute_transaction(&db).await;
 
-    let validity_txs = &state.validity_txs;
+    let validity_txs: &sea_orm::prelude::RcOrArc<
+        std::sync::Mutex<std::collections::HashMap<ethers::types::H160, Vec<Transaction>>>,
+    > = &state.validity_txs;
     let mut validity_txs = validity_txs
         .lock()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)

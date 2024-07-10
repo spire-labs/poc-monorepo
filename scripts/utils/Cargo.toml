@@ -6,12 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ethers = { version="2.0.14", features = ["legacy"] }
+spvm-rs = { path = "../../packages/spvm-rs" }
+ethers = { version = "2.0.14", features = ["legacy"] }
 tokio = { version = "1.0", features = ["full"] }
 dotenvy = "0.15.7"
 ethers-core = "2.0.14"
 alloy-sol-types = "0.7.6"
 serde_json = "1.0.120"
+serde = "1.0.204"
+reqwest = { version = "0.12.5", features = ["blocking", "json"] }
 
 [[bin]]
 name = "get_balance"
@@ -40,3 +43,11 @@ path = "src/new_block.rs"
 [[bin]]
 name = "find_creation"
 path = "src/find_creation.rs"
+
+[[bin]]
+name = "mints"
+path = "src/mints.rs"
+
+[[bin]]
+name = "sample_tx"
+path = "src/sample_tx.rs"

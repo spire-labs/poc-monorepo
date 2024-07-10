@@ -365,12 +365,13 @@ pub async fn get_wallet_balance(
 
     println!("Params.rollup_contract: {:?}", params.rollup_contract);
     println!("Contract A Address: {:?}", contract_a.address);
+    println!("Contract B Address: {:?}", contract_b.address);
     if params.rollup_contract == contract_a.address {
         rollup_contract_address = contract_a.address;
         rollup_contract_abi = contract_a.abi;
     } else if params.rollup_contract == contract_b.address {
-        contract_b.address;
-        contract_b.abi;
+        rollup_contract_address = contract_b.address;
+        rollup_contract_abi = contract_b.abi;
     } else {
         return Err(to_wrong_address_error());
     }

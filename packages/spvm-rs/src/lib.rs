@@ -8,8 +8,8 @@ use sea_orm::{
     entity::*, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
 use serde::{Deserialize, Serialize};
-use std::default::Default;
 use std::error::Error;
+use std::{default::Default, fmt::format};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct TransactionContent {
@@ -79,6 +79,9 @@ impl TransactionContent {
             TransactionParams::Transfer(params) => {
                 let sender_balance = Self::get_balance(&params.token_ticker, self.from, db).await?;
                 println!("Sender balance: {:?}", sender_balance);
+                if sender_balance < params.amount {
+                    return Err("Insufficient balance".into());
+                }
                 let receiver_balance =
                     Self::get_balance(&params.token_ticker, params.to, db).await?;
                 Self::set_balance(
@@ -99,7 +102,7 @@ impl TransactionContent {
         }
 
         let nonce = nonces::Entity::find()
-            .filter(nonces::Column::OwnerAddress.eq(self.from.to_string()))
+            .filter(nonces::Column::OwnerAddress.eq(format!("{:#x}", self.from)))
             .one(db)
             .await?;
 
@@ -111,7 +114,7 @@ impl TransactionContent {
             }
             None => {
                 let record = nonces::ActiveModel {
-                    owner_address: Set(self.from.to_string()),
+                    owner_address: Set(format!("{:#x}", self.from)),
                     nonce: Set(1),
                 };
                 record.insert(db).await?;
@@ -126,7 +129,7 @@ impl TransactionContent {
         db: &DatabaseConnection,
     ) -> Result<bool, Box<dyn std::error::Error>> {
         let nonce = nonces::Entity::find()
-            .filter(nonces::Column::OwnerAddress.eq(self.from.to_string()))
+            .filter(nonces::Column::OwnerAddress.eq(format!("{:#x}", self.from)))
             .one(db)
             .await?;
 
@@ -229,7 +232,7 @@ impl TransactionContent {
         // Update balance
         let state = state::Entity::find()
             .filter(state::Column::Ticker.eq(ticker))
-            .filter(state::Column::OwnerAddress.eq(holder_address.to_string()))
+            .filter(state::Column::OwnerAddress.eq(format!("{:#x}", holder_address)))
             .one(db)
             .await?;
 
@@ -242,7 +245,7 @@ impl TransactionContent {
             None => {
                 let record = state::ActiveModel {
                     ticker: Set(ticker.to_string()),
-                    owner_address: Set(holder_address.to_string()),
+                    owner_address: Set(format!("{:#x}", holder_address)),
                     amount: Set(balance as i32),
                 };
                 record.insert(db).await?;
@@ -259,7 +262,7 @@ impl TransactionContent {
     ) -> Result<u16, Box<dyn std::error::Error>> {
         let balance = state::Entity::find()
             .filter(state::Column::Ticker.eq(ticker))
-            .filter(state::Column::OwnerAddress.eq(holder_address.to_string()))
+            .filter(state::Column::OwnerAddress.eq(format!("{:#x}", holder_address)))
             .one(db)
             .await?;
 
@@ -324,7 +327,7 @@ pub fn encode_tx_content(tx_content: &TransactionContent) -> Bytes {
     encode(&[tokens]).into()
 }
 
-pub fn decode_tx_content(data: &str) -> Result<TransactionContent, Box<dyn Error>> {
+pub fn decode_tx_content(data: &Bytes) -> Result<TransactionContent, Box<dyn Error>> {
     let tokens = decode(
         &[ParamType::Tuple(vec![
             ParamType::Address,
@@ -332,8 +335,10 @@ pub fn decode_tx_content(data: &str) -> Result<TransactionContent, Box<dyn Error
             ParamType::Bytes,
             ParamType::Uint(32),
         ])],
-        &hex::decode(data).unwrap(),
+        // &hex::decode(data).unwrap(),
+        data,
     )?;
+    println!("Tokens: {:?}", tokens);
 
     let tokens = match &tokens[0] {
         Token::Tuple(t) => t.clone(),

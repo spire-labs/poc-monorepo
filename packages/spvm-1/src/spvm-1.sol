@@ -120,11 +120,18 @@ contract SPVM {
                 txContent.txParam,
                 (TransferTransactionParams)
             );
+            uint16 current_balance = getBalance(
+                transferParams.tokenTicker,
+                txContent.from
+            );
+            require(
+                current_balance >= transferParams.amount,
+                "Insufficient balance"
+            );
             setBalance(
                 transferParams.tokenTicker,
                 txContent.from,
-                getBalance(transferParams.tokenTicker, txContent.from) -
-                    transferParams.amount
+                current_balance - transferParams.amount
             );
             setBalance(
                 transferParams.tokenTicker,
