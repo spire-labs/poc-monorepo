@@ -93,11 +93,15 @@ pub async fn request_preconfirmation(
     let election_address = {
         let contract_data = state.contract_data.lock().unwrap();
         if data.chain == "chain_a" {
-            contract_data.chain_a.election.address
+            contract_data.chain_a.slashing.address
         } else {
-            contract_data.chain_b.election.address
+            contract_data.chain_b.slashing.address
         }
     };
+    println!(
+        "Election (actually Slashing) address: {:?}",
+        election_address
+    );
     // let election_abi = contract_data.chain_a.election.abi;
 
     // get the address of the next enforcer
@@ -140,6 +144,7 @@ pub async fn request_preconfirmation(
     // determine the amount to tip
     let tip = price_inclusion_preconfirmation(&tx_content, data.tx_hash.to_string()).await;
 
+    dotenvy::dotenv().ok();
     let pv_key = match env::var("GATEWAY_API_PRIVATE_KEY") {
         Ok(key) => key,
         Err(e) => {

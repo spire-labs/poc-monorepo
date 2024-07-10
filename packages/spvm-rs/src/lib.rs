@@ -133,18 +133,21 @@ impl TransactionContent {
             .one(db)
             .await?;
 
-        match nonce {
-            Some(record) => {
-                if record.nonce != self.nonce as i32 {
-                    return Err("Invalid nonce".into());
-                }
-            }
-            None => {
-                if self.nonce != 0 {
-                    return Err("Invalid nonce".into());
-                }
-            }
-        }
+        // TODOO temporarily disable nonce check
+        // match nonce {
+        //     Some(record) => {
+        //         if record.nonce != self.nonce as i32 {
+        //             // if the transaction's nonce sent by user is not equal to the nonce in the database
+        //             return Err("Invalid nonce (some)".into());
+        //         }
+        //     }
+        //     None => {
+        //         if self.nonce != 0 {
+        //             // initial nonce should be zero
+        //             return Err("Invalid nonce (none)".into());
+        //         }
+        //     }
+        // }
 
         match &self.tx_param {
             TransactionParams::Mint(params) => {
@@ -180,6 +183,7 @@ impl TransactionContent {
                     None => return Err("Token not initialized (None)".into()),
                 }
 
+                println!("owner address: {:?}", self.from);
                 let balance = state::Entity::find()
                     .filter(state::Column::Ticker.eq(&params.token_ticker))
                     .filter(state::Column::OwnerAddress.eq(format!("{:#x}", self.from)))

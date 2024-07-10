@@ -95,7 +95,7 @@ export const UserWallet: React.FC = () => {
   );
   // For the PoC Demo, we use a hardcoded address
   const [address, setAddress] = useState<string>("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720");
-  const [currentNonce, setCurrentNonce] = useState(0);
+  const [currentNonce, setCurrentNonce] = useState(1);
   const { hasCopied, onCopy } = useClipboard(address);
   const [existingTransactions, setExistingTransactions] = useState<
     Transaction[]
@@ -528,6 +528,7 @@ export const UserWallet: React.FC = () => {
                       address,
                       currentNonce, // TODO: reactivate NONCEs
                     );
+                    console.log("Nonce: ", currentNonce);
                     to = transferTxTo;
                   const privateKey = localStorage.getItem("privateKey");
                   if (!privateKey) {

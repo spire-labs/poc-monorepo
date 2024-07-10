@@ -26,9 +26,9 @@ async fn main() {
     let priv_key = env::var("PRIVATE_KEY").unwrap();
     let wallet = Wallet::from_str(&priv_key).unwrap();
     let tx_params = TransactionParams::Mint(MintTransactionParams {
-        token_ticker: "TRAIN".to_string(),
+        token_ticker: "ETH".to_string(),
         supply: 1000,
-        owner: Address::from_str("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720").unwrap(),
+        owner: Address::from_str("0x70997970c51812dc3a010c7d01b50e0d17dc79c8 ").unwrap(),
     });
     println!("Wallet address: {:?}", wallet.address());
     let tx_content = TransactionContent {

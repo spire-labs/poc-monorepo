@@ -23,6 +23,10 @@ contract Slashing {
         election_contract.setDefaultRecipient(enforcer);
     }
 
+    function getWinner(uint block_number) external view returns (address) {
+        return election_contract.getWinner(block_number);
+    }
+
     // checks that a preconfirmations commitment was in submitted validity conditions
     // returns true if the enforcer should be slashed
     function slash(
