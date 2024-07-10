@@ -1,12 +1,14 @@
 # gateway-api
+
 Spire Gateway API PoC
 
 [Gateway PoC spec](https://www.notion.so/spirelabs/Spire-PoC-Gateway-API-431b2d5e979648318f73c435c821e88c)
 
 [General PoC](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737)
 
-TODO (megan): 
-- [x] add into monorepo and resolve router build issues with spvm-rs 
+TODO (megan):
+
+- [x] add into monorepo and resolve router build issues with spvm-rs
 - [ ] clean up input/output types
 - [ ] write tests (coverage tool?)
 - [ ] error handling (make this into a struct, currently works but needs refactor)
@@ -17,6 +19,7 @@ TODO (megan):
 Note: Having a working docker installation is required.
 
 Install SeaORM command line tool:
+
 ```shell
 cargo install sea-orm-cli
 ```
@@ -25,7 +28,7 @@ cargo install sea-orm-cli
 
 ### Start Postgres
 
-Set up a local postgres database and configure `DATABASE_URL`. You can do this with the docker-compose configuration in this repo. Run the following command to start:
+Set up a local postgres database and configure `GATEWAY_API_DB`. You can do this with the docker-compose configuration in this repo. Run the following command to start:
 
 ```shell
 docker-compose up -d postgres
@@ -52,8 +55,8 @@ sea-orm-cli generate entity \
 Create a .env file and add the following variables (should be fine to copy .env.example):
 
 ```shell
-DATABASE_URL="postgresql://postgres:postgres@localhost:5433/gatewayapi"
-RPC_URL="http://34.30.119.68:8545"
+GATEWAY_API_DB="postgresql://postgres:postgres@localhost:5433/gatewayapi"
+ANVIL_RPC_URL="http://34.30.119.68:8545"
 ```
 
 # Testing

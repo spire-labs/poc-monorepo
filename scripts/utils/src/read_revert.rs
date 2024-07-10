@@ -15,7 +15,8 @@ use tokio;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // get latest block number
     dotenv().ok();
-    let provider_url = std::env::var("RPC_URL").expect("PROVIDER is not set in .env file");
+    let provider_url =
+        std::env::var("ANVIL_RPC_URL").expect("ANVIL_RPC_URL is not set in .env file");
     println!("Connecting to provider: {}", provider_url);
     let provider = Provider::<Http>::try_from(provider_url)?;
 

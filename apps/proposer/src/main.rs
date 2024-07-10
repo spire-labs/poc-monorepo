@@ -54,7 +54,7 @@ struct Appchain {
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    let db_path = env::var("DB").unwrap();
+    let db_path = env::var("PROPOSER_DB").unwrap();
     let db = Database::connect(db_path).await.unwrap();
     Migrator::up(&db, None)
         .await
@@ -88,7 +88,7 @@ async fn main() {
     loop {
         interval.tick().await;
 
-        let provider_url = env::var("PROVIDER").unwrap();
+        let provider_url = env::var("ANVIL_RPC_URL").unwrap();
         let provider = Provider::<Http>::try_from(provider_url).unwrap();
         let client = Arc::new(provider);
 
@@ -233,7 +233,7 @@ fn create_transfer_transaction(
 }
 
 async fn get_nonce_on_appchain(appchain_a: bool) -> Result<u32, Box<dyn std::error::Error>> {
-    let provider_url = env::var("PROVIDER")?;
+    let provider_url = env::var("ANVIL_RPC_URL")?;
     let provider = Provider::<Http>::try_from(provider_url)?;
     let client = Arc::new(provider);
 
@@ -286,7 +286,7 @@ async fn get_validity_conditions(
     appchain_a: bool,
 ) -> Result<Vec<spvm_rs::Transaction>, Box<dyn std::error::Error>> {
     abigen!(Slashing, "contracts/Slashing.json");
-    let provider_url = env::var("PROVIDER")?;
+    let provider_url = env::var("ANVIL_RPC_URL")?;
     let provider = Provider::<Http>::try_from(provider_url)?;
     let client = Arc::new(provider);
 
@@ -350,7 +350,7 @@ async fn propose_block(
     let proposer_address = wallet.address();
     let signature = wallet.sign_hash(tx_hash.into())?;
 
-    let provider_url = env::var("PROVIDER")?;
+    let provider_url = env::var("ANVIL_RPC_URL")?;
     let provider = Provider::<Http>::try_from(provider_url)?;
 
     let signer = SignerMiddleware::new(provider, wallet);

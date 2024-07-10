@@ -103,7 +103,7 @@ pub async fn request_preconfirmation(
     // get the address of the next enforcer
     abigen!(Election, "contracts/ElectionContract.json");
 
-    let provider_url = env::var("RPC_URL").unwrap();
+    let provider_url = env::var("ANVIL_RPC_URL").unwrap();
     let provider = match Provider::<Http>::try_from(provider_url) {
         Ok(provider) => provider,
         Err(e) => {
@@ -353,8 +353,9 @@ pub async fn get_wallet_balance(
     params: Query<CheckBalance>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     dotenvy::dotenv().ok();
-    let rpc_url = env::var("RPC_URL").expect("RPC_URL is not set in .env file");
-    let provider: Arc<Provider<Http>> = Arc::new(Provider::<Http>::try_from(rpc_url).unwrap());
+    let ANVIL_RPC_URL = env::var("ANVIL_RPC_URL").expect("ANVIL_RPC_URL is not set in .env file");
+    let provider: Arc<Provider<Http>> =
+        Arc::new(Provider::<Http>::try_from(ANVIL_RPC_URL).unwrap());
 
     let contract_data = state.contract_data.lock().unwrap().clone().to_owned();
     let contract_a = contract_data.chain_a.spvm;

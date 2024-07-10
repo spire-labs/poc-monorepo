@@ -16,7 +16,8 @@ use tokio;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // get latest block number
     dotenv().ok();
-    let provider_url = std::env::var("RPC_URL").expect("PROVIDER is not set in .env file");
+    let provider_url =
+        std::env::var("ANVIL_RPC_URL").expect("ANVIL_RPC_URL is not set in .env file");
     let chain_a_election_address_str = std::env::var("CHAIN_A_ELECTION_ADDRESS")
         .expect("CHAIN_A_ELECTION_ADDRESS is not set in .env file");
     let chain_a_election_address = chain_a_election_address_str.parse::<Address>()?;

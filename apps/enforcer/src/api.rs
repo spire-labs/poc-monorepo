@@ -213,7 +213,7 @@ pub async fn apply_tx(
     State(state): State<AppState>,
     Json(payload): Json<PrivilegedTransaction>,
 ) -> StatusCode {
-    let db_path = match env::var("DB") {
+    let db_path = match env::var("ENFORCER_DB") {
         Ok(path) => path,
         Err(e) => {
             error!("Database path not found: {}", e);

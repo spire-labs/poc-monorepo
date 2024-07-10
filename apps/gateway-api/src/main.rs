@@ -23,7 +23,7 @@ async fn main() {
 
     println!("yay!");
 
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    let db_url = env::var("GATEWAY_API_DB").expect("GATEWAY_API_DB is not set in .env file");
     let database: DatabaseConnection = Database::connect(db_url).await.unwrap();
 
     Migrator::up(&database, None)
@@ -39,7 +39,7 @@ async fn main() {
 
     let shared_data = Arc::new(Mutex::new(contract_data));
 
-    let provider_url = env::var("RPC_URL").expect("PROVIDER is not set in .env file");
+    let provider_url = env::var("ANVIL_RPC_URL").expect("ANVIL_RPC_URL is not set in .env file");
     let provider = Provider::<Http>::try_from(provider_url).unwrap();
     let current_block = provider.get_block_number().await.unwrap();
     let app_state = AppState {

@@ -99,7 +99,7 @@ async fn main() {
         }
     });
 
-    let db_path = env::var("DB").unwrap();
+    let db_path = env::var("ENFORCER_DB").unwrap();
     let db = Database::connect(db_path).await.unwrap();
 
     Migrator::up(&db, None)
@@ -154,7 +154,7 @@ async fn submit_validity_condition(
         extracted
     };
 
-    let provider_url = env::var("PROVIDER")?;
+    let provider_url = env::var("ANVIL_RPC_URL")?;
 
     let provider = Provider::<Http>::try_from(provider_url)?;
     let signer = SignerMiddleware::new(
@@ -221,7 +221,7 @@ async fn submit_validity_condition(
     if validity_txs.is_empty() {
         let empty_transactions: Vec<Transaction> = Vec::new();
         let slashing_contracts =
-            vec![Address::from_str("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
+            vec![Address::from_str("0x2279B7A0a67ENFORCER_DB372996a5FaB50D91eAA73d2eBe6").unwrap()];
 
         for &preconf_add in &slashing_contracts {
             let contract = Slashing::new(preconf_add, Arc::new(client.clone()));
@@ -323,7 +323,7 @@ mod tests {
         dotenv().ok();
         let wallet0 = LocalWallet::new(&mut thread_rng());
 
-        let db_path = env::var("DB").unwrap();
+        let db_path = env::var("ENFORCER_DB").unwrap();
         let db = Database::connect(db_path).await.unwrap();
         setup_schema(&db).await;
 
@@ -446,7 +446,7 @@ mod tests {
     // #[tokio::test]
     // async fn metadata() {
     //     dotenv().ok();
-    //     let db_path = env::var("DB").unwrap();
+    //     let db_path = env::var("ENFORCER_DB").unwrap();
 
     //     let db = Database::connect(db_path).await.unwrap();
     //     let app = app(db);
@@ -474,7 +474,7 @@ mod tests {
     #[tokio::test]
     async fn request_preconfirmation() {
         dotenv().ok();
-        let db_path = env::var("DB").unwrap();
+        let db_path = env::var("ENFORCER_DB").unwrap();
 
         let db = Database::connect(db_path).await.unwrap();
         let app = app(db);
@@ -508,7 +508,7 @@ mod tests {
     #[tokio::test]
     async fn request_preconfirmation_fail() {
         dotenv().ok();
-        let db_path = env::var("DB").unwrap();
+        let db_path = env::var("ENFORCER_DB").unwrap();
 
         let db = Database::connect(db_path).await.unwrap();
         let app = app(db);

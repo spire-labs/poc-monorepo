@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("The private key is: {}", priv_key);
     let wallet = priv_key.parse::<LocalWallet>()?;
     println!("The address is: {:#x}", wallet.address());
-    let provider_url = std::env::var("RPC_URL").expect("PROVIDER is not set in .env file");
+    let provider_url = std::env::var("ANVIL_RPC_URL").expect("ANVIL_RPC_URL is not set in .env file");
 
     let provider = Provider::<Http>::try_from(provider_url)?;
 
