@@ -1,23 +1,26 @@
 # poc-monorepo
 
-Spire PoC Monorepo!
+DISCLAIMER
 
-[Poc Spec](https://www.notion.so/spirelabs/Spire-Based-Stack-PoC-45ecd6a1afa44f8c8f28f086b42b08c5)
+This software is provided as a proof of concept and is not intended for production use. The authors make no warranties or representations about the suitability of the software for any purpose. The software is provided "as is," without any express or implied warranties, including but not limited to the implied warranties of merchantability and fitness for a particular purpose.
 
-[General PoC](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737)
+The use of this software is at your own risk. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
 
-TODO (megan):
+Welcome to the Spire PoC Monorepo
 
-- [x] finish creating a shared docker-compose.yml for all rust executables in monorepo (they live in the apps directory)
-- [x] set up github actions for PRs and pushes to main
-- [x] add .dockerignore files to apps to speed up build process
-- [x] test out functionality with hosted Anvil instance
-- [x] add Spire wallet/poc-infra/smart contracts to monorepo (useful commands for this include `rm -rf .git` inside the folder for the app added, then `git rm --cached path/to/app` from parent folder, followed by `git add path/to/app`)
-- [x] make sure the apps are up to date with the latest in all individual repos, announce to the team that we now build in the monorepo only
-- [ ] bring env vars out of individual apps into one consolidated file?
-- [ ] write additional scripts (makefile?) to spin up all apps in monorepo
-- [ ] add setup instructions in READMEs all apps for development purposes
-- [ ] add TODOs in all READMEs for getting the monorepo ready for release
+This monorepo shows prototypes of some of the building blocks of Spire's based appchain framework. It consists of the following components:
+
+- apps/wallet: A simple web wallet used for submitting transactions from appchains, and displaying appchain balances
+- apps/gateway-api: This gateway receives transactions from users, converts them into preconfirmation requests, and routes them to elected enforcers
+- apps/enforcer: This service is responsible for posting transaction validity conditions to L1 contracts
+- apps/proposer: This service builds blocks that satisfy the Validity Conditions sent by the Enforcer.
+
+There is also a set of smart contracts used to determine the election of proposers and enforcers. These can be found under `packages`:
+- packages/spvm-1/src/spvm-1: This is a small state transition machine capable of being executed in the EVM. It is used only in the PoC.
+- packages/spvm-1/lib/election-contract: Handles election of Proposers and Enforcers.
+- packages/spvm-1/lib/preconfirmations-slashing: This contract is used to slash enforces that misbehave.
+
+The goal of this PoC is to showcase some basic functionality of Spire, including cross-chain transfers with fast preconfirmations, and appchain composibility with cross-chain swaps.
 
 Note: Having a working docker installation is required.
 
@@ -136,10 +139,6 @@ If you see `failed to solve: error from sender: open /poc-monorepo/apps/gateway-
 ```shell
 sudo chmod -R 777 apps/gateway-api/postgres
 ```
-
-# Addresses Used
-
-Here is the list of [addresses](https://www.notion.so/spirelabs/Spire-PoC-Infrastructure-9caebb8915f24a1fba9caf1365b05737?pvs=4#d327fa44da264312ad8ac3bebae25c4a) used in the PoC, along with their private keys (may want to remove this when making this repo public, and add instructions for people to setup their own anvil node and generate their own wallets).
 
 # Testing
 
