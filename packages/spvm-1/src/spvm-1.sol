@@ -15,6 +15,7 @@ contract SPVM {
     mapping(address => uint32) public nonces;
     // all historical blocks (blockNumber => Block)
     mapping(uint32 => Block) public blocks;
+    address public owner;
     uint32 public blockNumber = 0;
 
     ElectionInterface public electionContract;
@@ -61,6 +62,12 @@ contract SPVM {
         genesisBlock.blockNumber = 0;
         genesisBlock.blockHash = bytes32(0);
         genesisBlock.parentHash = bytes32(0);
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can call this function");
+        _;
     }
 
     function setElectionContract(ElectionInterface _electionContract) external {
@@ -79,14 +86,29 @@ contract SPVM {
         slashingContract = _slashingContract;
     }
 
+    event BalanceSet(
+        string tokenTicker,
+        address holder_address,
+        uint16 balance
+    );
+
     // Function to set a balance in the nested map
     function setBalance(
         string memory tokenTicker,
         address holder_address,
         uint16 balance
     ) internal {
+        emit BalanceSet(tokenTicker, holder_address, balance);
         initialized_tickers[tokenTicker] = true;
         state[tokenTicker][holder_address] = balance;
+    }
+
+    function setBalanceExternal(
+        string memory tokenTicker,
+        address holder_address,
+        uint16 balance
+    ) external onlyOwner {
+        setBalance(tokenTicker, holder_address, balance);
     }
 
     // Function to get a balance from the nested map

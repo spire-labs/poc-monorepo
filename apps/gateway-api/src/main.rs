@@ -1,4 +1,6 @@
+use ethers::abi::Address;
 use ethers::providers::{Http, Middleware, Provider};
+use ethers_contract::abigen;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use std::env;
@@ -29,6 +31,53 @@ async fn main() {
     Migrator::up(&database, None)
         .await
         .expect("Database connection failed");
+
+    dotenvy::dotenv().ok();
+    // find all the events that have been emitted by SPVM contract (all user accounts)
+    let chain_a_spvm_address_str = env::var("CHAIN_A_SPVM_CONTRACT_ADDRESS")
+        .expect("CHAIN_A_SPVM_CONTRACT_ADDRESS is not set in .env file");
+    let chain_a_spvm_address = chain_a_spvm_address_str.parse::<Address>().unwrap();
+    let chain_b_spvm_address_str = env::var("CHAIN_B_SPVM_CONTRACT_ADDRESS")
+        .expect("CHAIN_B_SPVM_CONTRACT_ADDRESS is not set in .env file");
+    let chain_b_spvm_address = chain_b_spvm_address_str.parse::<Address>().unwrap();
+    abigen!(SPVM, "contracts/SPVM.json");
+    let provider_url = env::var("ANVIL_RPC_URL").unwrap();
+    let provider = match Provider::<Http>::try_from(provider_url) {
+        Ok(provider) => provider,
+        Err(e) => {
+            println!("Error creating provider: {:?}", e);
+            return;
+        }
+    };
+    let client = Arc::new(provider);
+
+    let chain_a_contract = SPVM::new(chain_a_spvm_address, client.clone());
+    let chain_b_contract = SPVM::new(chain_b_spvm_address, client.clone());
+
+    let addresses_to_fetch = vec![
+        "0xa0ee7a142d267c1f36714e4a8f75612f20a79720",
+        "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+        "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+        "0xa0ee7a142d267c1f36714e4a8f75612f20a79720",
+        "0x4253252263d15e795263458c0b85d63a0bf465df",
+    ];
+
+    let enforcer_db_url =
+        env::var("ENFORCER_DB_URL").expect("ENFORCER_DB_URL is not set in .env file");
+    let enforcer_database: DatabaseConnection = Database::connect(enforcer_db_url).await.unwrap();
+    // clear the `state` table of enforcer database
+    // Update balance
+
+    for address_str in addresses_to_fetch {
+        let address = address_str.parse::<Address>().unwrap();
+        let balance = chain_a_contract
+            .get_balance(String::from("RAIN"), address)
+            .call()
+            .await
+            .unwrap();
+        println!("Balance of {}: {}", address, balance);
+        // insert into database
+    }
 
     println!("let's do this!");
 

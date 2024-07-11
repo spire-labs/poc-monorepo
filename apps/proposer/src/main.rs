@@ -238,9 +238,9 @@ async fn get_nonce_on_appchain(appchain_a: bool) -> Result<u32, Box<dyn std::err
     let client = Arc::new(provider);
 
     let spvm = if appchain_a {
-        env::var("CHAIN_A_SPVM_CONTRACT_ADRESS")?
+        env::var("CHAIN_A_SPVM_CONTRACT_ADDRESS")?
     } else {
-        env::var("CHAIN_B_SPVM_CONTRACT_ADRESS")?
+        env::var("CHAIN_B_SPVM_CONTRACT_ADDRESS")?
     };
 
     let spvm_address = spvm.parse::<Address>()?;
@@ -357,9 +357,9 @@ async fn propose_block(
     let client = Arc::new(signer);
 
     let spvm = if appchain_a {
-        env::var("CHAIN_A_SPVM_CONTRACT_ADRESS")?
+        env::var("CHAIN_A_SPVM_CONTRACT_ADDRESS")?
     } else {
-        env::var("CHAIN_B_SPVM_CONTRACT_ADRESS")?
+        env::var("CHAIN_B_SPVM_CONTRACT_ADDRESS")?
     };
 
     let spvm_address = spvm.parse::<Address>()?;

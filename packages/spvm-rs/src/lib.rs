@@ -190,6 +190,7 @@ impl TransactionContent {
                     .one(db)
                     .await?;
 
+                println!("ticker: {:?}", params.token_ticker);
                 println!("Params amount {:?}", params.amount);
                 match balance {
                     Some(record) => {
