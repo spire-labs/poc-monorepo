@@ -10,6 +10,7 @@ import sys
 import venv
 import json
 from pathlib import Path
+import time
 
 from flask_cors import CORS
 
@@ -386,6 +387,8 @@ def main():
     chain_a_anvil_url = f"http://0.0.0.0:{CHAIN_A_PORT}"
     chain_a_web3 = Web3(Web3.HTTPProvider(chain_a_anvil_url))
 
+    time.sleep(5)  # Add a 5 second delay
+    
     if not chain_a_web3.is_connected():
         print("Failed to connect to the Chain A Anvil instance")
     
