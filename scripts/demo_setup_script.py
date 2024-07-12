@@ -195,29 +195,6 @@ def initialize_tokens(spvm_contract, spvm_address, web3):
         print(f"Error checking tx setup")
     print(f"successfully checked balance {check_balance_before} and after {check_balance_after}")
 
-# TODO: This will be replaced by calls to the Enforcer
-# def initialize_tokens_by_chain(spvm_contract, spvm_address, token_name, initial_amount=100, initial_recipient=DEFAULT_ANVIL_UNLOCKED_ADDRESS, web3):
-#     try:
-#         # check initial wallet balance
-#         check_balance_before = spvm_contract.functions.getBalance(token_name, initial_recipient).call()
-#     except:
-#         print(f"Error checking token setup for mint of {initial_amount} of {token_name} to {initial_recipient}")
-
-#     try:
-#         tx_hash = spvm_contract.functions.testExecuteRawMintTransaction().transact({'from': web3.eth.accounts[0]})
-#         recp = web3.eth.wait_for_transaction_receipt(tx_hash)
-#     except:
-#         print(f"Error executing test mint txs {e}")
-    
-#     print(f"successfully initialized tokens {tx_hash} and {recp}")
-#     # check initialized balances, for testing purposes
-#     try:
-#         check_balance_after = spvm_contract.functions.getBalance(token_name, initial_recipient).call()
-        
-#     except:
-#         print(f"Error checking tx setup")
-#     print(f"successfully checked balance {check_balance_before} and after {check_balance_after}")
-
 
 # Function to call on each new anvil block
 def on_new_block(block, election_contract, web3):
@@ -277,7 +254,6 @@ def deploy_contract(web3, bytecode, abi, constructor_args):
 
 
 # public api routes
-# TODO: Update to include chain information as well
 @app.route('/contracts', methods=['GET'])
 def get_contract_info():
     return jsonify({
@@ -311,14 +287,13 @@ def get_contract_info():
         }
     })
 
-# TODO: helper method until gateway is ready
+# helper method if gateway is not available
 @app.route('/test-wallet-balance', methods=['GET'])
 def get_wallet_balance():
     global spvm_test_contract
     rain_balance = spvm_test_contract.functions.getBalance("RAIN", DEFAULT_AVNIL_USER_WALLET_ADDRESS).call()
     queen_balance = spvm_test_contract.functions.getBalance("QUEEN", DEFAULT_AVNIL_USER_WALLET_ADDRESS).call()
     infinity_balance = spvm_test_contract.functions.getBalance("INFINITY", DEFAULT_AVNIL_USER_WALLET_ADDRESS).call()
-    # TODO: Does this call the enforcer instead to create initial balances?
     return jsonify({
         'balance': balance,
         'rain': rain_balance,
@@ -329,8 +304,7 @@ def get_wallet_balance():
 def main():
     global chain_a_spvm_address, chain_b_spvm_address, chain_a_election_address, chain_b_election_address, chain_a_slashing_address, chain_b_slashing_address, spvm_test_contract, spvm_contract_abi, election_contract_abi, slashing_contract_abi, l1_erc_20_address
     home = Path.home()
-    # base_dir = home / "spire-poc/repos"
-    # for running locally, just use home
+
     base_dir = home
 
     # from flask import Flask, jsonify
@@ -349,7 +323,6 @@ def main():
     ]
 
     # Clone or pull repositories
-    # TODO: is it beter to rm -rf and rebuild repos dirs each time?
     for repo_name, repo_url in repos:
         clone_or_pull_repo(base_dir / repo_name, repo_url)
 
@@ -430,8 +403,7 @@ def main():
         raise "[CHAIN B]: error deploying SPVM contract"
 
     # deploy election contract
-    # TODO: Set this to something realistic
-    test_minter_address = chain_a_web3.eth.accounts[0]#"0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+    test_minter_address = chain_a_web3.eth.accounts[0]
 
     election_repo_path = base_dir / "poc-election-contract"
 
@@ -444,7 +416,6 @@ def main():
     else:
         raise "error deploying election contract"
     
-    # TODO: ?
     set_election_output = set_election_contract(chain_a_spvm_address, chain_a_election_address, port=CHAIN_A_PORT)
     print(set_election_output)
 
@@ -544,4 +515,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # app.run(host='0.0.0.0', port=5000)

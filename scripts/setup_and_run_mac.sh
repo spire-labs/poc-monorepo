@@ -4,8 +4,10 @@
 # Set permissions for the SSH private key file. Only use this if you don't already have an ssh key registered with github
 # chmod 600 /home/username/.ssh/id_ed25519
 
-# Install forge TODO (this breaks. need to run by hand)
-
+# Install forge by hand if not already installed
+# curl -L https://foundry.paradigm.xyz | bash
+# source ~/.bashrc
+# foundryup
 
 
 # Set up the virtual environment
