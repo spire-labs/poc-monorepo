@@ -6,7 +6,7 @@ This software is provided as a proof of concept and is not intended for producti
 
 The use of this software is at your own risk. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
 
-Welcome to the Spire PoC Monorepo
+## Welcome to the Spire PoC Monorepo
 
 This monorepo shows prototypes of some of the building blocks of Spire's based appchain framework. It consists of the following components:
 
@@ -22,9 +22,11 @@ There is also a set of smart contracts used to determine the election of propose
 
 The goal of this PoC is to showcase some basic functionality of Spire, including cross-chain transfers with fast preconfirmations, and appchain composibility with cross-chain swaps.
 
-Note: Having a working docker installation is required.
 
-# Demo Setup
+## Demo Setup
+
+Having a working docker installation is required to run things locally.
+Please note that as this code is intended as a PoC, there may be some bugs in it.
 
 If you want a one-line setup to run the demo (without making code changes), everything is set up in the `docker-compose.yml` file. Just run:
 
@@ -40,7 +42,7 @@ npm i
 npm run start
 ```
 
-# Development Setup
+## Development Setup
 
 If you want to change the code, it is recommended that you run the subsystem (enforcer, proposer, or gateway) you are working on locally. The subsystems you are not editing can be run in docker.
 
@@ -81,7 +83,7 @@ CONTAINER ID   IMAGE                      COMMAND                  CREATED      
 
 ## Enforcer
 
-As seen in the notion documentation above, the enforcer takes preconfirmation requests from the gateway and submits validity conditions to the preconfirmation slashing contract.
+The enforcer takes preconfirmation requests from the gateway and submits validity conditions to the preconfirmation slashing contract.
 
 <!-- image -->
 
@@ -113,9 +115,7 @@ forge build
 The scripts in /scripts can be used to spin up an Anvil node and populate it with contracts. There are two in particular:
 
 `scripts/setup_and_run.sh`
-This is used to install all dependencies for the projects, spin up a python virtual env, and then execute `demo_setup_script.py`, which will deploy contracts to anvil and populate them with some initial data. Note that this script is designed to run on Linux, as it is using apt for its package manager. If you are on a Mac, additional instructions will be added below.
-
-Note that this script used to be responsible for spinning up Rust repos as well as contracts. Now that we have moved to using a monorepo, the script no longer handles any of the rust projects or their dependencies.
+This is used to install all dependencies for the projects, spin up a python virtual env, and then execute `demo_setup_script.py`, which will deploy contracts to anvil and populate them with some initial data. Note that this script is designed to run on Linux, as it is using apt for its package manager. If you are on a Mac, additional instructions have been added below.
 
 `demo_setup_script.py`
 This will spin up an anvil node, deploy an ERC20 contract, and deploy the Spire contracts.
