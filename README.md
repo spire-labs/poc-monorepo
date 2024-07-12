@@ -108,6 +108,16 @@ cd apps/spvm-1
 forge build
 ```
 
+## Wallet
+Here a couple of examples of the Spire wallet's UI:
+
+
+https://github.com/user-attachments/assets/b28f1693-9724-4cf2-aa66-1c6492dc612d
+
+
+https://github.com/user-attachments/assets/1d2cb2aa-504d-45f6-b694-161db4c6b8e3
+
+
 ## Special instructions for running scripts
 
 The scripts in /scripts can be used to spin up an Anvil node and populate it with contracts. There are two in particular:
