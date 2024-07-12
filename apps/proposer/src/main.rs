@@ -1,6 +1,6 @@
 use ethers::{
     contract::abigen,
-    core::abi::{decode, encode, ParamType, Token},
+    core::abi::{decode, encode, encode_packed, ParamType, Token},
     middleware::SignerMiddleware,
     providers::{Http, Middleware, Provider},
     signers::{LocalWallet, Signer},
@@ -63,7 +63,13 @@ async fn main() {
     let start_block_num = env::var("BLOCK_NUM")
         .ok()
         .and_then(|v| v.parse::<u32>().ok())
-        .unwrap_or(0u32);
+        .unwrap_or(1u32);
+
+    let provider_url = env::var("ANVIL_RPC_URL").unwrap();
+    let provider = Provider::<Http>::try_from(provider_url).unwrap();
+    let client = Arc::new(provider);
+
+    let block_num = client.get_block_number().await.unwrap().as_u32();
 
     let app_state = AppState {
         appchain_a: Appchain {
@@ -185,6 +191,9 @@ async fn main() {
                 })
                 .collect();
 
+			println!("a block number: {:?}", guard.appchain_a.block_number);
+			println!("b block number: {:?}", guard.appchain_b.block_number);
+
             let a_new_hash = propose_block(
                 a_txs,
                 a_encoded_txs,
@@ -207,8 +216,8 @@ async fn main() {
             guard.appchain_a.parent_hash = a_new_hash;
             guard.appchain_b.parent_hash = b_new_hash;
 
-            guard.appchain_a.block_number += 2;
-            guard.appchain_b.block_number += 2;
+            guard.appchain_a.block_number += 1;
+            guard.appchain_b.block_number += 1;
         });
     }
 }
@@ -342,13 +351,15 @@ async fn propose_block(
     block_number: u32,
     appchain_a: bool,
 ) -> Result<[u8; 32], Box<dyn std::error::Error>> {
-    let tx_hash = keccak256(&tx_encoded);
+	let tokens = [Token::Bytes(parent_hash.to_vec()) ,Token::Bytes(tx_encoded.to_vec())];
+    let block_encoded = encode_packed(&tokens).unwrap();
+    let block_hash = keccak256(&block_encoded);
 
     let pv_key = env::var("PROPOSER_PRIVATE_KEY")?;
     let wallet = LocalWallet::from_str(&pv_key)?.with_chain_id(31337u64);
 
     let proposer_address = wallet.address();
-    let signature = wallet.sign_hash(tx_hash.into())?;
+    let signature = wallet.sign_hash(block_hash.into())?;
 
     let provider_url = env::var("ANVIL_RPC_URL")?;
     let provider = Provider::<Http>::try_from(provider_url)?;
@@ -396,7 +407,7 @@ async fn propose_block(
     let _ = spvm
         .propose_block(Block {
             transactions: txs,
-            block_hash: tx_hash,
+            block_hash,
             parent_hash,
             block_number,
             proposer: proposer_address,
@@ -406,7 +417,8 @@ async fn propose_block(
         .await?
         .await?;
 
-    Ok(tx_hash)
+	println!("block proposal successful");
+    Ok(block_hash)
 }
 
 fn encode_transactions(txs: &[Transaction]) -> Bytes {

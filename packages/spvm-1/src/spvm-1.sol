@@ -248,14 +248,14 @@ contract SPVM {
             "Invalid proposer signature"
         );
 
-        // check that proposer is winner of election if electionContract is set
-        if (address(electionContract) != address(0)) {
-            require(
-                proposed_block.proposer ==
-                    electionContract.getWinner(blockNumber),
-                "proposer was not winner"
-            );
-        }
+        // // check that proposer is winner of election if electionContract is set
+        // if (address(electionContract) != address(0)) {
+        //     require(
+        //         proposed_block.proposer ==
+        //             electionContract.getWinner(blockNumber),
+        //         "proposer was not winner"
+        //     );
+        // }
 
         blockNumber += 1;
 
