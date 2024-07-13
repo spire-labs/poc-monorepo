@@ -61,7 +61,7 @@ Create a .env file and add the following variables (should be fine to copy .env.
 
 ```shell
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/gatewayapi"
-RPC_URL="http://34.30.119.68:8545"
+RPC_URL="http://localhost:8545"
 ```
 
 # Testing

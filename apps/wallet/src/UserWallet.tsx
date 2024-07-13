@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import {
-  createMintTransaction,
   createTransferTransaction,
   fetchContracts,
-  getBalance,
   getBalancesForAllTokens,
   getTransactions,
   signTransaction,
@@ -30,7 +28,6 @@ import {
   ModalCloseButton,
   useDisclosure,
   Select,
-  Stack,
   Tabs,
   TabList,
   TabPanels,
@@ -60,7 +57,7 @@ interface Token {
   symbol: string;
   name: string;
   logo: string;
-  balance: string; // Initial balance is a string for display
+  balance: string;
 }
 
 export const UserWallet: React.FC = () => {
@@ -71,12 +68,6 @@ export const UserWallet: React.FC = () => {
       logo: `${process.env.PUBLIC_URL}/rain_coin.png`,
       balance: "0.0",
     },
-    // {
-    //   symbol: "INFINITY",
-    //   name: "Infinity token",
-    //   logo: `${process.env.PUBLIC_URL}/infinity_coin.png`,
-    //   balance: "0.0",
-    // },
     {
       symbol: "QUEEN",
       name: "Queen Token",
@@ -106,8 +97,6 @@ export const UserWallet: React.FC = () => {
   const handleTabsChange = (index: number) => {
     setTabIndex(index);
   };
-
-
 
   // state for transfers
   const [transferTxTo, setTransferTxTo] = useState("");
@@ -199,48 +188,9 @@ export const UserWallet: React.FC = () => {
         updatedBalances[token.symbol] = token.balance;
       });
       setTokenBalances(updatedBalances);
-      // const updatedBalances2: Record<string, string> = {};
-      // updatedTokens.forEach((token) => {
-      //   updatedBalances2[token.symbol] = token.balance;
-      // });
-      // updatedBalances['RAIN'] = '25'//'100'
-      // updatedBalances2['RAIN'] = '75'//'0'
       setTokenBalances(updatedBalances);
-      // setTokenBalances2(updatedBalances2);
     }
   }, [balances]);
-
-  // const forceUpdateBalances = (u: any) => {
-  //   let balances = [
-  //     {balance: "25", status: "OK", tokenTicket: "RAIN"},
-  //     {balance: "200", status: "OK", tokenTicket: "QUEEN"},
-  //   ]
-  //   // if (u) {
-  //   //   balances = u;
-  //   // }
-  //   const updatedTokens = tokens.map(token => {
-  //     const matchingBalance = balances.find((balance:any) => balance.tokenTicker === token.symbol);
-  //     return matchingBalance ? { ...token, balance: matchingBalance.balance.toString()} : token;
-  //   });
-  //   console.log('UPDATED TOKEN BALANCES', updatedTokens)
-  //   setTokens(updatedTokens);
-  //   const updatedBalances: Record<string, string> = {};
-  //   updatedTokens.forEach((token) => {
-  //     updatedBalances[token.symbol] = token.balance;
-  //   });
-  //   // setTokenBalances(updatedBalances);
-  //   const updatedBalances2: Record<string, string> = {};
-  //   updatedTokens.forEach((token) => {
-  //     updatedBalances2[token.symbol] = token.balance;
-  //   });
-  //   // updatedBalances['RAIN'] = '25'
-  //   // updatedBalances2['RAIN'] = '75'
-  //   updatedBalances['RAIN'] = '10'
-  //   updatedBalances2['RAIN'] = '75'
-  //   updatedBalances2['QUEEN'] = '215'
-  //   setTokenBalances(updatedBalances);
-  //   setTokenBalances2(updatedBalances2);
-  // }
 
   const generateWallet = () => {
     const storedAddress = localStorage.getItem("address");
@@ -315,9 +265,7 @@ export const UserWallet: React.FC = () => {
               />
             )}
           </Flex>
-          {/* <Button leftIcon={<FaPlus />} onClick={generateWallet} size="sm">
-            New
-          </Button> */}
+
         </Flex>
         <HStack width="full" justifyContent="space-between">
   {/* Container for the tokens */}
@@ -331,7 +279,7 @@ export const UserWallet: React.FC = () => {
               boxSize="30px"
               borderRadius={25}
               alt={`${token.name} Logo`}
-              mr={2} // Adds margin to the right of the image
+              mr={2}
             />
             <Text fontSize="2xl">
               {selectedChain == '11' ? tokenBalances[token.symbol] : tokenBalances2[token.symbol]} {token.symbol}
@@ -351,32 +299,6 @@ export const UserWallet: React.FC = () => {
     ))}
   </Select>
 </HStack>
-        {/* <HStack width="full" justifyContent="space-between">
-          {tokens.map((token) => (
-            <Box key={token.symbol} textAlign="center">
-              {selectedToken === token.symbol && (
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Image
-                    src={token.logo}
-                    boxSize="30px"
-                    borderRadius={25}
-                    alt={`${token.name} Logo`}
-                  />
-                  <Text fontSize="2xl">
-                    {selectedChain == '11' ? tokenBalances[token.symbol] : tokenBalances2[token.symbol]} {token.symbol}
-                  </Text>
-                </Flex>
-              )}
-            </Box>
-          ))}
-          <Select onChange={handleTokenChange} value={selectedToken} w={100}>
-            {tokens.map((token) => (
-              <option key={token.symbol} value={token.symbol}>
-                {token.name}
-              </option>
-            ))}
-          </Select>
-        </HStack> */}
         <Button
           leftIcon={<FaArrowRight />}
           onClick={checkBalance}
@@ -597,7 +519,6 @@ export const UserWallet: React.FC = () => {
                     ...existingTransactions,
                     signedTx as any,
                   ]);
-                  // forceUpdateBalances({});
                   onClose();
                 }}
               >

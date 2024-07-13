@@ -55,7 +55,7 @@ pub struct ContractData {
 pub async fn fetch_contract_data() -> Result<ContractData, reqwest::Error> {
     let client = Client::new();
     let response = client
-        .get("http://34.30.119.68:5000/contracts")
+        .get("http://localhost:5000/contracts")
         .send()
         .await?
         .json::<ContractData>()
