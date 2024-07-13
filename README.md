@@ -85,10 +85,6 @@ CONTAINER ID   IMAGE                      COMMAND                  CREATED      
 
 The enforcer takes preconfirmation requests from the gateway and submits validity conditions to the preconfirmation slashing contract.
 
-<!-- image -->
-
-![Enforcer](docs_assets/poc-architecture.png)
-
 ```shell
 cargo run
 
