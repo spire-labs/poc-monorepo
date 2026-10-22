@@ -204,7 +204,12 @@ contract SPVMTest is Test, SPVM {
         assertEq(getBalance("TST", address(1)), send_amount);
     }
 
-    // check that function reverts when it should
+    // Foundry expects the reverting call at a deeper call depth than expectRevert.
+    function executeRawForTest(bytes memory rawTx) external {
+        executeRawTransaction(rawTx);
+    }
+
+    // Check every rejection independently and preserve the initial state.
     function testValidityChecking() external {
         // token already initialized
         SPVMTransaction memory tx1 = createMintTransaction(
@@ -223,7 +228,7 @@ contract SPVMTest is Test, SPVM {
             1
         );
         vm.expectRevert(bytes("Token already initialized"));
-        executeRawTransaction(encodeRawTransactionContents(tx2));
+        this.executeRawForTest(encodeRawTransactionContents(tx2));
 
         // token not initialized
         SPVMTransaction memory tx3 = createTransferTransaction(
@@ -234,18 +239,18 @@ contract SPVMTest is Test, SPVM {
             1
         );
         vm.expectRevert(bytes("Token not initialized"));
-        executeRawTransaction(encodeRawTransactionContents(tx3));
+        this.executeRawForTest(encodeRawTransactionContents(tx3));
 
         // Insufficient balance
         SPVMTransaction memory tx4 = createTransferTransaction(
             "TST",
             address(this),
             address(1),
-            100,
+            101,
             1
         );
         vm.expectRevert(bytes("Insufficient balance"));
-        executeRawTransaction(encodeRawTransactionContents(tx4));
+        this.executeRawForTest(encodeRawTransactionContents(tx4));
 
         SPVMTransaction memory tx5 = createTransferTransaction(
             "TST",
@@ -255,7 +260,7 @@ contract SPVMTest is Test, SPVM {
             1
         );
         vm.expectRevert(bytes("Insufficient balance"));
-        executeRawTransaction(encodeRawTransactionContents(tx5));
+        this.executeRawForTest(encodeRawTransactionContents(tx5));
 
         // Invalid transaction
         bytes memory txParam6 = abi.encode(
@@ -265,7 +270,7 @@ contract SPVMTest is Test, SPVM {
             TransactionContent(address(this), 2, txParam6, 1)
         );
         vm.expectRevert(bytes("Invalid transaction type"));
-        executeRawTransaction(rawTx6);
+        this.executeRawForTest(rawTx6);
 
         // invalid nonce
         SPVMTransaction memory tx7 = createMintTransaction(
@@ -276,7 +281,21 @@ contract SPVMTest is Test, SPVM {
             0
         );
         vm.expectRevert(bytes("Invalid nonce"));
-        executeTx(tx7);
+        this.executeRawForTest(encodeRawTransactionContents(tx7));
+
+        assertEq(getBalance("TST", address(this)), 100);
+        assertEq(getBalance("TST", address(1)), 0);
+        assertEq(nonces[address(this)], 1);
+        assertFalse(initialized_tickers["TST2"]);
+
+        // Spending the exact balance is valid; only the larger amount above fails.
+        SPVMTransaction memory valid = createTransferTransaction(
+            "TST", address(this), address(1), 100, 1
+        );
+        this.executeRawForTest(encodeRawTransactionContents(valid));
+        assertEq(getBalance("TST", address(this)), 0);
+        assertEq(getBalance("TST", address(1)), 100);
+        assertEq(nonces[address(this)], 2);
     }
 
     function testValidateSignature() external view {

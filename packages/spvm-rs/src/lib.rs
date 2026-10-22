@@ -99,7 +99,7 @@ impl TransactionContent {
         }
 
         let nonce = nonces::Entity::find()
-            .filter(nonces::Column::OwnerAddress.eq(self.from.to_string()))
+            .filter(nonces::Column::OwnerAddress.eq(format!("{:#x}", self.from)))
             .one(db)
             .await?;
 
@@ -111,7 +111,7 @@ impl TransactionContent {
             }
             None => {
                 let record = nonces::ActiveModel {
-                    owner_address: Set(self.from.to_string()),
+                    owner_address: Set(format!("{:#x}", self.from)),
                     nonce: Set(1),
                 };
                 record.insert(db).await?;
@@ -126,7 +126,7 @@ impl TransactionContent {
         db: &DatabaseConnection,
     ) -> Result<bool, Box<dyn std::error::Error>> {
         let nonce = nonces::Entity::find()
-            .filter(nonces::Column::OwnerAddress.eq(self.from.to_string()))
+            .filter(nonces::Column::OwnerAddress.eq(format!("{:#x}", self.from)))
             .one(db)
             .await?;
 
@@ -229,7 +229,7 @@ impl TransactionContent {
         // Update balance
         let state = state::Entity::find()
             .filter(state::Column::Ticker.eq(ticker))
-            .filter(state::Column::OwnerAddress.eq(holder_address.to_string()))
+            .filter(state::Column::OwnerAddress.eq(format!("{:#x}", holder_address)))
             .one(db)
             .await?;
 
@@ -242,7 +242,7 @@ impl TransactionContent {
             None => {
                 let record = state::ActiveModel {
                     ticker: Set(ticker.to_string()),
-                    owner_address: Set(holder_address.to_string()),
+                    owner_address: Set(format!("{:#x}", holder_address)),
                     amount: Set(balance as i32),
                 };
                 record.insert(db).await?;
@@ -259,7 +259,7 @@ impl TransactionContent {
     ) -> Result<u16, Box<dyn std::error::Error>> {
         let balance = state::Entity::find()
             .filter(state::Column::Ticker.eq(ticker))
-            .filter(state::Column::OwnerAddress.eq(holder_address.to_string()))
+            .filter(state::Column::OwnerAddress.eq(format!("{:#x}", holder_address)))
             .one(db)
             .await?;
 
@@ -442,8 +442,6 @@ pub fn decode_transaction_params(
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use super::Transaction;
     use super::*;
     use sea_orm::{entity::prelude::*, Database, DbBackend, Schema};
@@ -456,8 +454,11 @@ mod tests {
     async fn setup() -> (LocalWallet, DatabaseConnection) {
         let wallet0 = LocalWallet::new(&mut thread_rng());
 
-        let db_path = env::var("DB").unwrap();
-        let db = Database::connect(db_path).await.unwrap();
+        // Each test owns its database; parallel tests must not share balances
+        // or nonces, and CI does not need an external database credential.
+        let mut options = sea_orm::ConnectOptions::new("sqlite::memory:");
+        options.max_connections(1);
+        let db = Database::connect(options).await.unwrap();
         setup_schema(&db).await;
 
         (wallet0, db)
@@ -475,6 +476,142 @@ mod tests {
         let _result = db.execute(db.get_database_backend().build(&stmt1)).await;
 
         let _result = db.execute(db.get_database_backend().build(&stmt2)).await;
+    }
+
+    #[async_std::test]
+    async fn full_addresses_keep_balances_and_nonces_separate() {
+        use migration::MigratorTrait;
+        let (_, connection) = setup().await;
+        migration::Migrator::up(&connection, None).await.unwrap();
+        let first = Address::from_slice(&[0x11; 20]);
+        let mut bytes = [0x11; 20];
+        bytes[10] = 0x22;
+        let second = Address::from_slice(&bytes);
+        assert_ne!(first, second);
+        assert_eq!(first.to_string(), second.to_string());
+
+        let mint = TransactionContent {
+            from: first,
+            tx_type: 0,
+            tx_param: TransactionParams::Mint(MintTransactionParams {
+                token_ticker: "ABC".into(),
+                owner: first,
+                supply: 100,
+            }),
+            nonce: 0,
+        };
+        mint.execute_raw_transaction(&connection).await.unwrap();
+        TransactionContent::set_balance("ABC", second, 7, &connection)
+            .await
+            .unwrap();
+        assert_eq!(
+            TransactionContent::get_balance("ABC", first, &connection)
+                .await
+                .unwrap(),
+            100
+        );
+        assert_eq!(
+            TransactionContent::get_balance("ABC", second, &connection)
+                .await
+                .unwrap(),
+            7
+        );
+
+        let transfer = TransactionContent {
+            from: second,
+            tx_type: 1,
+            tx_param: TransactionParams::Transfer(TransferTransactionParams {
+                token_ticker: "ABC".into(),
+                to: first,
+                amount: 1,
+            }),
+            nonce: 0,
+        };
+        transfer.execute_raw_transaction(&connection).await.unwrap();
+        assert_eq!(
+            TransactionContent::get_balance("ABC", first, &connection)
+                .await
+                .unwrap(),
+            101
+        );
+        assert_eq!(
+            TransactionContent::get_balance("ABC", second, &connection)
+                .await
+                .unwrap(),
+            6
+        );
+        let records = nonces::Entity::find().all(&connection).await.unwrap();
+        assert_eq!(records.len(), 2);
+        for address in [first, second] {
+            let key = format!("{:#x}", address);
+            assert_eq!(key.len(), 42);
+            assert_eq!(
+                records
+                    .iter()
+                    .find(|row| row.owner_address == key)
+                    .unwrap()
+                    .nonce,
+                1
+            );
+        }
+    }
+
+    #[async_std::test]
+    async fn migration_refuses_legacy_identifiers_without_changing_accounts() {
+        use migration::MigratorTrait;
+        for table in ["state", "nonces"] {
+            let (_, connection) = setup().await;
+            let address = Address::from_slice(&[0x11; 20]);
+            let legacy = address.to_string();
+            TransactionContent::set_balance("ABC", address, 100, &connection)
+                .await
+                .unwrap();
+            if table == "state" {
+                state::ActiveModel {
+                    ticker: Set("ABC".into()),
+                    owner_address: Set(legacy.clone()),
+                    amount: Set(11),
+                }
+                .insert(&connection)
+                .await
+                .unwrap();
+            } else {
+                nonces::ActiveModel {
+                    owner_address: Set(legacy.clone()),
+                    nonce: Set(3),
+                }
+                .insert(&connection)
+                .await
+                .unwrap();
+            }
+            let error = migration::Migrator::up(&connection, None)
+                .await
+                .unwrap_err();
+            assert!(error.to_string().contains("Legacy account identifiers"));
+            assert_eq!(
+                TransactionContent::get_balance("ABC", address, &connection)
+                    .await
+                    .unwrap(),
+                100
+            );
+            if table == "state" {
+                let row = state::Entity::find()
+                    .filter(state::Column::OwnerAddress.eq(legacy))
+                    .one(&connection)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(row.amount, 11);
+            } else {
+                let row = nonces::Entity::find()
+                    .filter(nonces::Column::OwnerAddress.eq(legacy))
+                    .one(&connection)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(row.nonce, 3);
+            }
+        }
     }
 
     fn create_transaction(
